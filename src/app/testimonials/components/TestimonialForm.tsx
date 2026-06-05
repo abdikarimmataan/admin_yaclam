@@ -40,19 +40,14 @@ function TestimonialInput({
   if (field.key === "sortOrder") {
     return (
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-slate-700">{field.label}</label>
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">
+          {field.label}
+          {field.required && <span className="text-red-500"> *</span>}
+        </label>
         <input
           type="text"
-          inputMode="numeric"
-          value={
-            value === "" || value === undefined || value === null ? "" : String(value)
-          }
-          onChange={(e) => {
-            const v = e.target.value;
-            if (v === "" || /^\d+$/.test(v)) {
-              onChange(v === "" ? "" : Number(v));
-            }
-          }}
+          value={String(value ?? "")}
+          onChange={(e) => onChange(e.target.value)}
           placeholder="e.g. 1"
           className={inputClass}
         />
@@ -125,10 +120,6 @@ export function TestimonialForm({ fields, form, formErrors, onChange }: Testimon
 
   return (
     <div className="space-y-4">
-      {formErrors._form && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{formErrors._form}</p>
-      )}
-
       {gridRows.map((row, rowIndex) => (
         <div key={rowIndex} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {row.map((field) => (

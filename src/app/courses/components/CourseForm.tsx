@@ -45,10 +45,6 @@ export function CourseForm({
 }: CourseFormProps) {
   return (
     <div className="space-y-4">
-      {formErrors._form && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{formErrors._form}</p>
-      )}
-
       <Field label="Title" required error={formErrors.title}>
         <input
           value={String(form.title ?? "")}

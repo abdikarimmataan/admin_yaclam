@@ -1,4 +1,14 @@
-import { Footprints, Globe, Home, LayoutGrid } from "lucide-react";
+import {
+  FileText,
+  Footprints,
+  Globe,
+  GraduationCap,
+  Home,
+  LayoutGrid,
+  Mail,
+  Map,
+  Newspaper,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export type FrontendPage = {
@@ -23,6 +33,41 @@ export const FRONTEND_PAGES: FrontendPage[] = [
     href: "/frontend/courses-cms",
     icon: LayoutGrid,
     description: "Courses listing page copy and visibility",
+  },
+  {
+    slug: "roadmap-cms",
+    label: "Roadmap CMS",
+    href: "/frontend/roadmap-cms",
+    icon: Map,
+    description: "Roadmaps listing page copy and visibility",
+  },
+  {
+    slug: "scholarship-cms",
+    label: "Scholarship CMS",
+    href: "/frontend/scholarship-cms",
+    icon: GraduationCap,
+    description: "Scholarships listing page copy and visibility",
+  },
+  {
+    slug: "blog-cms",
+    label: "Blog CMS",
+    href: "/frontend/blog-cms",
+    icon: Newspaper,
+    description: "Blog listing page copy and visibility",
+  },
+  {
+    slug: "about-cms",
+    label: "About CMS",
+    href: "/frontend/about-cms",
+    icon: FileText,
+    description: "About page copy and visibility",
+  },
+  {
+    slug: "contact-cms",
+    label: "Contact Us CMS",
+    href: "/frontend/contact-cms",
+    icon: Mail,
+    description: "Contact page copy and visibility",
   },
   {
     slug: "footer",

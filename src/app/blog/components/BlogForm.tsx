@@ -121,10 +121,6 @@ export function BlogForm({ fields, form, formErrors, categoryOptions, onChange }
 
   return (
     <div className="space-y-4">
-      {formErrors._form && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{formErrors._form}</p>
-      )}
-
       {categoryField && (
         <div>
           <label className="mb-1.5 block text-sm font-medium text-slate-700">

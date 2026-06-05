@@ -22,6 +22,13 @@ export function validateFieldForm(
     }
   });
 
+  const sortRaw = String(form.sortOrder ?? "").trim();
+  if (!sortRaw) {
+    errors.sortOrder = "Sort order is required";
+  } else if (!/^\d+$/.test(sortRaw)) {
+    errors.sortOrder = "Sort order must be a whole number";
+  }
+
   return errors;
 }
 
@@ -39,7 +46,9 @@ export function buildFieldPayload(
     if (!f) return;
     const raw = form[key];
     let value: unknown = raw;
-    if (f.type === "number") {
+    if (key === "sortOrder") {
+      value = Number.parseInt(String(raw ?? "").trim(), 10);
+    } else if (f.type === "number") {
       value = Number.isFinite(Number(raw)) ? Number(raw) : 0;
     } else if (f.type === "boolean") {
       value = !!raw;

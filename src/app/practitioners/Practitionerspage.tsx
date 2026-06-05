@@ -8,7 +8,8 @@ import { PractitionerModal } from "@/app/practitioners/components/PractitionerMo
 import { PractitionerTable } from "@/app/practitioners/components/PractitionerTable";
 import {
   PRACTITIONER_FORM_FIELDS,
-  getNextSortOrder,
+  getDuplicateSortOrders,
+  getNextPractitionerSortOrderSuggestion,
   sortPractitionersByLatestSaved,
   type PractitionerRecord,
 } from "@/app/practitioners/model/practitioner.model";
@@ -16,11 +17,13 @@ import { practitionerApi } from "@/app/practitioners/service/practitioner.servic
 import {
   buildPractitionerPayload,
   getModalFields,
+  toPractitionerFormValues,
   validatePractitionerForm,
 } from "@/app/practitioners/validation/practitioner.validation";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { pickFormValues } from "@/app/frontend/CMS/lib/cms-utils";
 import { confirmVisibilityChange, showError } from "@/shared/utils/sweetalert";
+import { toast } from "@/shared/utils/toast";
 
 const practitionerKeys = PRACTITIONER_FORM_FIELDS.map((f) => f.key);
 
@@ -31,7 +34,6 @@ export function Practitionerspage() {
   const debouncedSearch = useDebounce(search, 300);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [listError, setListError] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<PractitionerRecord | null>(null);
@@ -42,12 +44,11 @@ export function Practitionerspage() {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    setListError("");
     try {
       const res = await practitionerApi.getAll({ page: 1, pageSize: 500 });
       setItems(sortPractitionersByLatestSaved((res.data ?? []) as PractitionerRecord[]));
     } catch (err) {
-      setListError((err as ApiError).message || "Failed to load practitioners");
+      toast.error((err as ApiError).message || "Failed to load practitioners");
       setItems([]);
     } finally {
       setLoading(false);
@@ -57,6 +58,8 @@ export function Practitionerspage() {
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
+
+  const duplicateSortOrders = useMemo(() => getDuplicateSortOrders(items), [items]);
 
   const filtered = useMemo(() => {
     if (!debouncedSearch) return items;
@@ -83,7 +86,7 @@ export function Practitionerspage() {
     initial.color = "#1D4ED8";
     initial.coursesCount = 0;
     initial.studentsCount = "";
-    initial.sortOrder = getNextSortOrder(items);
+    initial.sortOrder = getNextPractitionerSortOrderSuggestion(items);
     setForm(initial);
     setFormErrors({});
     setShowModal(true);
@@ -96,7 +99,7 @@ export function Practitionerspage() {
     try {
       const record = await practitionerApi.getById(id);
       setEditing(record);
-      setForm(pickFormValues(record, practitionerKeys));
+      setForm(toPractitionerFormValues(pickFormValues(record, practitionerKeys)));
       setFormErrors({});
       setShowModal(true);
     } catch (err) {
@@ -116,6 +119,7 @@ export function Practitionerspage() {
     const errors = validatePractitionerForm(form, Boolean(editing));
     if (Object.keys(errors).length) {
       setFormErrors(errors);
+      toast.error("Please fix the highlighted fields");
       return;
     }
 
@@ -127,11 +131,13 @@ export function Practitionerspage() {
       } else {
         await practitionerApi.create(payload);
       }
+      toast.success(editing ? "Updated successfully" : "Created successfully");
       closeModal();
       setPage(1);
       await fetchItems();
     } catch (err) {
-      setFormErrors({ _form: (err as ApiError).message });
+      toast.error((err as ApiError).message);
+      setFormErrors({});
     } finally {
       setSubmitting(false);
     }
@@ -173,15 +179,10 @@ export function Practitionerspage() {
         </button>
       </div>
 
-      {listError && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-          {listError}
-        </div>
-      )}
-
       <PractitionerTable
         loading={loading}
         paginated={paginated}
+        duplicateSortOrders={duplicateSortOrders}
         startIdx={startIdx}
         search={search}
         page={page}

@@ -8,7 +8,8 @@ import { YaclamModal } from "@/app/yaclam/components/YaclamModal";
 import { YaclamTable } from "@/app/yaclam/components/YaclamTable";
 import {
   YACLAM_FORM_FIELDS,
-  getNextSortOrder,
+  getDuplicateSortOrders,
+  getNextYaclamSortOrderSuggestion,
   type YaclamRecord,
 } from "@/app/yaclam/model/yaclam.model";
 import { yaclamApi } from "@/app/yaclam/service/yaclam.service";
@@ -20,6 +21,7 @@ import {
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { pickFormValues } from "@/app/frontend/CMS/lib/cms-utils";
 import { confirmVisibilityChange, showError } from "@/shared/utils/sweetalert";
+import { toast } from "@/shared/utils/toast";
 
 const yaclamKeys = YACLAM_FORM_FIELDS.map((f) => f.key);
 
@@ -30,7 +32,6 @@ export function Yaclampage() {
   const debouncedSearch = useDebounce(search, 300);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [listError, setListError] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<YaclamRecord | null>(null);
@@ -41,12 +42,11 @@ export function Yaclampage() {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    setListError("");
     try {
       const res = await yaclamApi.getAll({ page: 1, pageSize: 500 });
       setItems((res.data ?? []) as YaclamRecord[]);
     } catch (err) {
-      setListError((err as ApiError).message || "Failed to load yaclam items");
+      toast.error((err as ApiError).message || "Failed to load yaclam items");
       setItems([]);
     } finally {
       setLoading(false);
@@ -56,6 +56,8 @@ export function Yaclampage() {
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
+
+  const duplicateSortOrders = useMemo(() => getDuplicateSortOrders(items), [items]);
 
   const filtered = useMemo(() => {
     if (!debouncedSearch) return items;
@@ -80,7 +82,7 @@ export function Yaclampage() {
     setEditing(null);
     const initial = pickFormValues(null, yaclamKeys);
     initial.isVisible = true;
-    initial.sortOrder = getNextSortOrder(items);
+    initial.sortOrder = getNextYaclamSortOrderSuggestion(items);
     initial.icon = "Globe";
     setForm(initial);
     setFormErrors({});
@@ -114,6 +116,7 @@ export function Yaclampage() {
     const errors = validateYaclamForm(form, Boolean(editing));
     if (Object.keys(errors).length) {
       setFormErrors(errors);
+      toast.error("Please fix the highlighted fields");
       return;
     }
 
@@ -125,10 +128,12 @@ export function Yaclampage() {
       } else {
         await yaclamApi.create(payload);
       }
+      toast.success(editing ? "Updated successfully" : "Created successfully");
       closeModal();
       await fetchItems();
     } catch (err) {
-      setFormErrors({ _form: (err as ApiError).message });
+      toast.error((err as ApiError).message);
+      setFormErrors({});
     } finally {
       setSubmitting(false);
     }
@@ -170,15 +175,10 @@ export function Yaclampage() {
         </button>
       </div>
 
-      {listError && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-          {listError}
-        </div>
-      )}
-
       <YaclamTable
         loading={loading}
         paginated={paginated}
+        duplicateSortOrders={duplicateSortOrders}
         startIdx={startIdx}
         search={search}
         page={page}

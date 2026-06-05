@@ -38,7 +38,26 @@ function PractitionerInput({
     error ? "border-red-400" : "border-slate-300"
   }`;
 
-  if (field.key === "sortOrder" || field.key === "coursesCount") {
+  if (field.key === "sortOrder") {
+    return (
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">
+          {field.label}
+          {field.required && <span className="text-red-500"> *</span>}
+        </label>
+        <input
+          type="text"
+          value={String(value ?? "")}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="e.g. 1"
+          className={inputClass}
+        />
+        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      </div>
+    );
+  }
+
+  if (field.key === "coursesCount") {
     return (
       <div>
         <label className="mb-1.5 block text-sm font-medium text-slate-700">{field.label}</label>
@@ -54,7 +73,7 @@ function PractitionerInput({
               onChange(v === "" ? "" : Number(v));
             }
           }}
-          placeholder={field.key === "sortOrder" ? "e.g. 1" : "e.g. 5"}
+          placeholder="e.g. 5"
           className={inputClass}
         />
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
@@ -126,10 +145,6 @@ export function PractitionerForm({ fields, form, formErrors, onChange }: Practit
 
   return (
     <div className="space-y-4">
-      {formErrors._form && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{formErrors._form}</p>
-      )}
-
       {gridRows.map((row, rowIndex) => (
         <div key={rowIndex} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {row.map((field) => (

@@ -1,11 +1,12 @@
 "use client";
 
 import type { FormField } from "@/app/frontend/CMS/config/cms-field-types";
+import { IconSelectField } from "@/shared/components/IconSelectField";
 
 const PLACEHOLDERS: Record<string, string> = {
-  icon: "e.g. Globe",
   title: "e.g. Learn anywhere",
   description: "e.g. Access courses on any device, at your own pace.",
+  sortOrder: "e.g. 1",
 };
 
 type YaclamFormProps = {
@@ -44,6 +45,18 @@ function YaclamInput({
     );
   }
 
+  if (field.key === "icon") {
+    return (
+      <IconSelectField
+        label={field.label}
+        required={field.required}
+        value={String(value ?? "")}
+        onChange={(v) => onChange(v)}
+        error={error}
+      />
+    );
+  }
+
   if (field.key === "sortOrder") {
     return (
       <div>
@@ -52,19 +65,9 @@ function YaclamInput({
         </label>
         <input
           type="text"
-          inputMode="numeric"
-          value={
-            value === "" || value === undefined || value === null
-              ? ""
-              : String(value)
-          }
-          onChange={(e) => {
-            const v = e.target.value;
-            if (v === "" || /^\d+$/.test(v)) {
-              onChange(v === "" ? "" : Number(v));
-            }
-          }}
-          placeholder="e.g. 1"
+          value={String(value ?? "")}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={PLACEHOLDERS.sortOrder}
           className={inputClass}
         />
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
@@ -118,9 +121,6 @@ export function YaclamForm({ fields, form, formErrors, onChange }: YaclamFormPro
 
   return (
     <div className="space-y-4">
-      {formErrors._form && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{formErrors._form}</p>
-      )}
       {(titleField || iconField) && (
         <div className="grid grid-cols-2 gap-4">
           {titleField && (

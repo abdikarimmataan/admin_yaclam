@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { ApiError } from "@/config/api";
 import { CollapsibleFormPanel } from "@/app/frontend/CMS/components/CollapsibleFormPanel";
 import {
@@ -20,6 +20,11 @@ import {
 import { buildFormPayload, emptyFormValues, recordToFormValues } from "@/app/frontend/CMS/lib/cms-form";
 import type { CmsRecord } from "@/config/api";
 import { loadSingleton, saveSingleton } from "@/app/frontend/CMS/services/singleton-cms";
+import { toast } from "@/shared/utils/toast";
+import {
+  applyFormValidationFeedback,
+  clearFieldError,
+} from "@/shared/utils/form-validation";
 
 type BlockState = {
   recordId: string | null;
@@ -27,8 +32,6 @@ type BlockState = {
   loading: boolean;
   saving: boolean;
   errors: Record<string, string>;
-  message: string;
-  messageType: "success" | "error" | "";
 };
 
 function initialBlockState(): BlockState {
@@ -38,8 +41,6 @@ function initialBlockState(): BlockState {
     loading: true,
     saving: false,
     errors: {},
-    message: "",
-    messageType: "",
   };
 }
 
@@ -55,9 +56,12 @@ export function HomePageEditor() {
   const [sectionsBlock, setSectionsBlock] = useState<BlockState>(() => initialBlockState());
 
   const loadHome = useCallback(async () => {
-    setHomeBlock((s) => ({ ...s, loading: true, message: "", messageType: "" }));
+    setHomeBlock((s) => ({ ...s, loading: true }));
     try {
       const { record, error } = await loadSingleton(HOME_API_PATH);
+      if (error) {
+        toast.error(error);
+      }
       setHomeBlock((s) => ({
         ...s,
         recordId: record?.id ? String(record.id) : null,
@@ -65,24 +69,24 @@ export function HomePageEditor() {
           ? recordToFormValues(record, ALL_HOME_CMS_FIELDS)
           : emptyFormValues(ALL_HOME_CMS_FIELDS),
         loading: false,
-        message: error ?? "",
-        messageType: error ? "error" : "",
       }));
     } catch (err) {
+      toast.error((err as ApiError).message || "Failed to load home content");
       setHomeBlock((s) => ({
         ...s,
         loading: false,
         form: emptyFormValues(ALL_HOME_CMS_FIELDS),
-        message: (err as ApiError).message || "Failed to load home content",
-        messageType: "error",
       }));
     }
   }, []);
 
   const loadSections = useCallback(async () => {
-    setSectionsBlock((s) => ({ ...s, loading: true, message: "", messageType: "" }));
+    setSectionsBlock((s) => ({ ...s, loading: true }));
     try {
       const { record, error } = await loadSingleton(HOME_SECTIONS_API_PATH);
+      if (error) {
+        toast.error(error);
+      }
       setSectionsBlock((s) => ({
         ...s,
         recordId: record?.id ? String(record.id) : null,
@@ -90,16 +94,13 @@ export function HomePageEditor() {
           ? recordToFormValues(record, ALL_HOME_SECTIONS_FIELDS)
           : emptyHomeSectionsForm(),
         loading: false,
-        message: error ?? "",
-        messageType: error ? "error" : "",
       }));
     } catch (err) {
+      toast.error((err as ApiError).message || "Failed to load home sections");
       setSectionsBlock((s) => ({
         ...s,
         loading: false,
         form: emptyHomeSectionsForm(),
-        message: (err as ApiError).message || "Failed to load home sections",
-        messageType: "error",
       }));
     }
   }, []);
@@ -113,8 +114,7 @@ export function HomePageEditor() {
     setHomeBlock((s) => ({
       ...s,
       form: { ...s.form, [key]: value },
-      message: "",
-      messageType: "",
+      errors: clearFieldError(s.errors, key),
     }));
   };
 
@@ -122,8 +122,7 @@ export function HomePageEditor() {
     setSectionsBlock((s) => ({
       ...s,
       form: { ...s.form, [key]: value },
-      message: "",
-      messageType: "",
+      errors: clearFieldError(s.errors, key),
     }));
   };
 
@@ -131,10 +130,13 @@ export function HomePageEditor() {
     const { payload, errors } = buildFormPayload(homeBlock.form, ALL_HOME_CMS_FIELDS);
     if (!payload) {
       setHomeBlock((s) => ({ ...s, errors }));
+      applyFormValidationFeedback(errors, ALL_HOME_CMS_FIELDS, {
+        panels: HOME_CMS_PANELS,
+      });
       return;
     }
 
-    setHomeBlock((s) => ({ ...s, saving: true, errors: {}, message: "", messageType: "" }));
+    setHomeBlock((s) => ({ ...s, saving: true, errors: {} }));
     try {
       const saved = await saveSingleton(
         HOME_API_PATH,
@@ -146,16 +148,11 @@ export function HomePageEditor() {
         recordId: saved.id ? String(saved.id) : s.recordId,
         form: recordToFormValues(saved as CmsRecord, ALL_HOME_CMS_FIELDS),
         saving: false,
-        message: homeBlock.recordId ? "Home content updated." : "Home content created.",
-        messageType: "success",
       }));
+      toast.success(homeBlock.recordId ? "Home content updated." : "Home content created.");
     } catch (err) {
-      setHomeBlock((s) => ({
-        ...s,
-        saving: false,
-        message: (err as ApiError).message || "Save failed",
-        messageType: "error",
-      }));
+      toast.error((err as ApiError).message || "Save failed");
+      setHomeBlock((s) => ({ ...s, saving: false }));
     }
   };
 
@@ -166,13 +163,16 @@ export function HomePageEditor() {
     );
     if (!payload) {
       setSectionsBlock((s) => ({ ...s, errors }));
+      applyFormValidationFeedback(errors, ALL_HOME_SECTIONS_FIELDS, {
+        panels: HOME_SECTIONS_PANELS,
+      });
       return;
     }
 
     // Keep document visible in public getAll (API filters isVisible !== false)
     payload.isVisible = true;
 
-    setSectionsBlock((s) => ({ ...s, saving: true, errors: {}, message: "", messageType: "" }));
+    setSectionsBlock((s) => ({ ...s, saving: true, errors: {} }));
     try {
       const saved = await saveSingleton(
         HOME_SECTIONS_API_PATH,
@@ -184,18 +184,13 @@ export function HomePageEditor() {
         recordId: saved.id ? String(saved.id) : s.recordId,
         form: recordToFormValues(saved as CmsRecord, ALL_HOME_SECTIONS_FIELDS),
         saving: false,
-        message: sectionsBlock.recordId
-          ? "Home sections updated."
-          : "Home sections created.",
-        messageType: "success",
       }));
+      toast.success(
+        sectionsBlock.recordId ? "Home sections updated." : "Home sections created."
+      );
     } catch (err) {
-      setSectionsBlock((s) => ({
-        ...s,
-        saving: false,
-        message: (err as ApiError).message || "Save failed",
-        messageType: "error",
-      }));
+      toast.error((err as ApiError).message || "Save failed");
+      setSectionsBlock((s) => ({ ...s, saving: false }));
     }
   };
 
@@ -236,19 +231,6 @@ export function HomePageEditor() {
                 />
               ))}
             </div>
-
-            {homeBlock.message && (
-              <p
-                className={`mt-3 flex items-center gap-1.5 text-sm ${
-                  homeBlock.messageType === "success" ? "text-green-700" : "text-red-600"
-                }`}
-              >
-                {homeBlock.messageType === "success" && (
-                  <CheckCircle2 className="h-4 w-4 shrink-0" />
-                )}
-                {homeBlock.message}
-              </p>
-            )}
 
             <div className="mt-4 flex justify-end border-t border-blue-100 pt-4">
               <button
@@ -304,19 +286,6 @@ export function HomePageEditor() {
                 />
               ))}
             </div>
-
-            {sectionsBlock.message && (
-              <p
-                className={`mt-3 flex items-center gap-1.5 text-sm ${
-                  sectionsBlock.messageType === "success" ? "text-green-700" : "text-red-600"
-                }`}
-              >
-                {sectionsBlock.messageType === "success" && (
-                  <CheckCircle2 className="h-4 w-4 shrink-0" />
-                )}
-                {sectionsBlock.message}
-              </p>
-            )}
 
             <div className="mt-4 flex justify-end border-t border-violet-100 pt-4">
               <button

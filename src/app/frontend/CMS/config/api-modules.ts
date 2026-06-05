@@ -22,6 +22,7 @@ import {
 } from "@/app/frontend/CMS/config/home-cms-fields";
 
 import type { FormField } from "@/app/frontend/CMS/config/cms-field-types";
+import { PAGE_CMS_FORM_FIELDS } from "@/app/frontend/CMS/config/page-cms-fields";
 
 export type { FieldType, FormField } from "@/app/frontend/CMS/config/cms-field-types";
 
@@ -51,23 +52,67 @@ export const HOME_CMS_MODULE: CmsModuleConfig = {
   formFields: HOME_CMS_FORM_FIELDS,
 };
 
-/** Courses listing page CMS (single document) — `/courses` */
-export const COURSES_PAGE_FORM_FIELDS: FormField[] = [
-  { key: "headerText", label: "Header Text", type: "text" },
-  { key: "title", label: "Title", type: "text" },
-  { key: "subtitle", label: "Subtitle", type: "textarea" },
-  { key: "emptyStateText", label: "Empty State Text", type: "text" },
-  { key: "isVisible", label: "Visible", type: "boolean" },
-];
+/** Courses listing page CMS (single document) — `/course_cms` */
+export const COURSES_PAGE_FORM_FIELDS: FormField[] = PAGE_CMS_FORM_FIELDS;
 
 export const COURSES_PAGE_MODULE: CmsModuleConfig = {
   slug: "courses-page",
-  apiPath: "/courses",
+  apiPath: "/course_cms",
   label: "Course CMS",
   group: "frontend",
   icon: LayoutGrid,
   singleRecord: true,
   formFields: COURSES_PAGE_FORM_FIELDS,
+};
+
+export const ROADMAP_CMS_MODULE: CmsModuleConfig = {
+  slug: "roadmap-cms",
+  apiPath: "/roadmap_cms",
+  label: "Roadmap CMS",
+  group: "frontend",
+  icon: Map,
+  singleRecord: true,
+  formFields: PAGE_CMS_FORM_FIELDS,
+};
+
+export const SCHOLARSHIP_CMS_MODULE: CmsModuleConfig = {
+  slug: "scholarship-cms",
+  apiPath: "/scholarship_cms",
+  label: "Scholarship CMS",
+  group: "frontend",
+  icon: GraduationCap,
+  singleRecord: true,
+  formFields: PAGE_CMS_FORM_FIELDS,
+};
+
+export const BLOG_CMS_MODULE: CmsModuleConfig = {
+  slug: "blog-cms",
+  apiPath: "/blog_cms",
+  label: "Blog CMS",
+  group: "frontend",
+  icon: Newspaper,
+  singleRecord: true,
+  formFields: PAGE_CMS_FORM_FIELDS,
+};
+
+export const ABOUT_CMS_MODULE: CmsModuleConfig = {
+  slug: "about-cms",
+  apiPath: "/about_cms",
+  label: "About CMS",
+  group: "frontend",
+  icon: FileText,
+  singleRecord: true,
+  formFields: PAGE_CMS_FORM_FIELDS,
+};
+
+export const CONTACT_CMS_MODULE: CmsModuleConfig = {
+  slug: "contact-cms",
+  apiPath: "/contact_cms",
+  label: "Contact Us CMS",
+  group: "frontend",
+  icon: Mail,
+  singleRecord: true,
+  formFields: PAGE_CMS_FORM_FIELDS,
 };
 
 /** Home page sections (single document) */
@@ -82,34 +127,8 @@ export const HOME_SECTIONS_MODULE: CmsModuleConfig = {
 };
 
 export const CMS_MODULES: CmsModuleConfig[] = [
-  {
-    slug: "about",
-    apiPath: "/pages/about",
-    label: "About Page",
-    group: "cms",
-    icon: FileText,
-    singleRecord: true,
-    formFields: [
-      { key: "headerText", label: "Header Text", type: "text" },
-      { key: "title", label: "Title", type: "text" },
-      { key: "subtitle", label: "Subtitle", type: "textarea" },
-      { key: "isVisible", label: "Visible", type: "boolean" },
-    ],
-  },
-  {
-    slug: "contact",
-    apiPath: "/pages/contact",
-    label: "Contact Page",
-    group: "cms",
-    icon: Mail,
-    singleRecord: true,
-    formFields: [
-      { key: "headerText", label: "Header Text", type: "text" },
-      { key: "title", label: "Title", type: "text" },
-      { key: "subtitle", label: "Subtitle", type: "textarea" },
-      { key: "isVisible", label: "Visible", type: "boolean" },
-    ],
-  },
+  { ...ABOUT_CMS_MODULE, slug: "about", label: "About Page", group: "cms" },
+  { ...CONTACT_CMS_MODULE, slug: "contact", label: "Contact Page", group: "cms" },
   {
     slug: "login-page",
     apiPath: "/login",
@@ -187,51 +206,14 @@ export const CMS_MODULES: CmsModuleConfig[] = [
     singleRecord: true,
     formFields: COURSES_PAGE_FORM_FIELDS,
   },
+  { ...ROADMAP_CMS_MODULE, slug: "roadmaps-page", label: "Roadmaps Page", group: "cms" },
   {
-    slug: "roadmaps-page",
-    apiPath: "/roadmaps",
-    label: "Roadmaps Page",
-    group: "cms",
-    icon: Map,
-    singleRecord: true,
-    formFields: [
-      { key: "headerText", label: "Header Text", type: "text" },
-      { key: "title", label: "Title", type: "text" },
-      { key: "subtitle", label: "Subtitle", type: "textarea" },
-      { key: "emptyStateText", label: "Empty State Text", type: "text" },
-      { key: "isVisible", label: "Visible", type: "boolean" },
-    ],
-  },
-  {
+    ...SCHOLARSHIP_CMS_MODULE,
     slug: "scholarships-page",
-    apiPath: "/scholarships",
     label: "Scholarships Page",
     group: "cms",
-    icon: GraduationCap,
-    singleRecord: true,
-    formFields: [
-      { key: "headerText", label: "Header Text", type: "text" },
-      { key: "title", label: "Title", type: "text" },
-      { key: "subtitle", label: "Subtitle", type: "textarea" },
-      { key: "emptyStateText", label: "Empty State Text", type: "text" },
-      { key: "isVisible", label: "Visible", type: "boolean" },
-    ],
   },
-  {
-    slug: "blog-page",
-    apiPath: "/blog",
-    label: "Blog Page",
-    group: "cms",
-    icon: Newspaper,
-    singleRecord: true,
-    formFields: [
-      { key: "headerText", label: "Header Text", type: "text" },
-      { key: "title", label: "Title", type: "text" },
-      { key: "subtitle", label: "Subtitle", type: "textarea" },
-      { key: "emptyStateText", label: "Empty State Text", type: "text" },
-      { key: "isVisible", label: "Visible", type: "boolean" },
-    ],
-  },
+  { ...BLOG_CMS_MODULE, slug: "blog-page", label: "Blog Page", group: "cms" },
   {
     slug: "fields",
     apiPath: "/fields",
@@ -243,9 +225,8 @@ export const CMS_MODULES: CmsModuleConfig[] = [
     statusField: "isVisible",
     formFields: [
       { key: "name", label: "Name", type: "text", required: true },
+      { key: "icon", label: "Icon", type: "text", required: true },
       { key: "description", label: "Description", type: "textarea" },
-      { key: "icon", label: "Icon", type: "text" },
-      { key: "sortOrder", label: "Sort Order", type: "number" },
       { key: "isVisible", label: "Visible", type: "boolean" },
     ],
   },
@@ -425,6 +406,12 @@ export function getModuleBySlug(slug: string): CmsModuleConfig | undefined {
   const all = [
     HOME_CMS_MODULE,
     HOME_SECTIONS_MODULE,
+    COURSES_PAGE_MODULE,
+    ROADMAP_CMS_MODULE,
+    SCHOLARSHIP_CMS_MODULE,
+    BLOG_CMS_MODULE,
+    ABOUT_CMS_MODULE,
+    CONTACT_CMS_MODULE,
     ...CMS_MODULES,
   ];
   return all.find((m) => m.slug === slug);

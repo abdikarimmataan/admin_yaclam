@@ -49,7 +49,7 @@ export function YaclamModal({
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-xl"
+        className="w-full max-w-md overflow-visible rounded-2xl border border-slate-200 bg-white shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
@@ -64,7 +64,7 @@ export function YaclamModal({
           </button>
         </div>
 
-        <div className="px-6 py-4">
+        <div className="overflow-visible px-6 py-4">
           <YaclamForm
             fields={fields}
             form={form}

@@ -19,6 +19,7 @@ import { getFieldLabel } from "@/app/fields/model/field.model";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import type { FieldOption } from "@/app/courses/components/CourseMediaPanel";
 import { confirmVisibilityChange, showError } from "@/shared/utils/sweetalert";
+import { toast } from "@/shared/utils/toast";
 
 function getFieldRecordId(field: FieldRecord): string {
   const raw = field as FieldRecord & { _id?: string };
@@ -36,7 +37,6 @@ export function Coursepage() {
   const debouncedSearch = useDebounce(search, 300);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [listError, setListError] = useState("");
   const [recordId, setRecordId] = useState<string | null>(null);
   const [curriculumCourseId, setCurriculumCourseId] = useState<string | null>(null);
   const [curriculumCourseTitle, setCurriculumCourseTitle] = useState("");
@@ -55,7 +55,6 @@ export function Coursepage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    setListError("");
     try {
       const [coursesRes, fieldsRes] = await Promise.all([
         courseApi.getAll({ page: 1, pageSize: 500 }),
@@ -64,7 +63,7 @@ export function Coursepage() {
       setItems((coursesRes.data ?? []) as CourseRecord[]);
       setFields((fieldsRes.data ?? []) as FieldRecord[]);
     } catch (err) {
-      setListError((err as ApiError).message || "Failed to load courses");
+      toast.error((err as ApiError).message || "Failed to load courses");
       setItems([]);
     } finally {
       setLoading(false);
@@ -95,7 +94,7 @@ export function Coursepage() {
 
   const openCreate = () => {
     if (fields.length === 0) {
-      setListError("Create at least one field before adding courses.");
+      toast.error("Create at least one field before adding courses.");
       return;
     }
     setRecordId(null);
@@ -187,12 +186,6 @@ export function Coursepage() {
           <Plus className="h-4 w-4" />
         </button>
       </div>
-
-      {listError && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-          {listError}
-        </div>
-      )}
 
       <CourseTable
         loading={loading}

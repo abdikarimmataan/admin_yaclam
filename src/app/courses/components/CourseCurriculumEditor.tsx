@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import type { ApiError } from "@/config/api";
 import { CourseCurriculumPanel } from "@/app/courses/components/CourseCurriculumPanel";
 import type { CourseModule } from "@/app/courses/model/course.model";
 import { courseApi } from "@/app/courses/service/course.service";
 import { buildCurriculumPayload } from "@/app/courses/validation/curriculum.validation";
+import { toast } from "@/shared/utils/toast";
 
 type CourseCurriculumEditorProps = {
   courseId: string;
@@ -32,13 +33,9 @@ export function CourseCurriculumEditor({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"success" | "error" | "">("");
 
   const load = useCallback(async () => {
     setLoading(true);
-    setMessage("");
-    setMessageType("");
     try {
       const record = await courseApi.getById(courseId);
       const existing = normalizeCurriculum(record.curriculum);
@@ -46,8 +43,7 @@ export function CourseCurriculumEditor({
       setHadCurriculum(existing.length > 0);
       setLessonIdPrefix(String(record.id ?? courseId).trim() || courseId);
     } catch (err) {
-      setMessage((err as ApiError).message || "Failed to load curriculum");
-      setMessageType("error");
+      toast.error((err as ApiError).message || "Failed to load curriculum");
     } finally {
       setLoading(false);
     }
@@ -66,21 +62,17 @@ export function CourseCurriculumEditor({
 
     setSaving(true);
     setErrors({});
-    setMessage("");
-    setMessageType("");
 
     try {
       const saved = await courseApi.saveCurriculum(courseId, payload);
       const next = normalizeCurriculum(saved.curriculum);
       setCurriculum(next);
       setHadCurriculum(next.length > 0);
-      setMessage(hadCurriculum ? "Curriculum updated." : "Curriculum created.");
-      setMessageType("success");
+      toast.success(hadCurriculum ? "Curriculum updated." : "Curriculum created.");
       onSaved();
     } catch (err) {
       const apiErr = err as ApiError;
-      setMessage(apiErr.message || "Save failed");
-      setMessageType("error");
+      toast.error(apiErr.message || "Save failed");
       if (apiErr.errors?.length) {
         const fieldErrors: Record<string, string> = {};
         apiErr.errors.forEach((e) => {
@@ -135,19 +127,6 @@ export function CourseCurriculumEditor({
               errors={errors}
               onChange={setCurriculum}
             />
-
-            {message && (
-              <p
-                className={`mt-3 flex items-center gap-1.5 text-sm ${
-                  messageType === "success" ? "text-green-700" : "text-red-600"
-                }`}
-              >
-                {messageType === "success" && (
-                  <CheckCircle2 className="h-4 w-4 shrink-0" />
-                )}
-                {message}
-              </p>
-            )}
 
             <div className="mt-4 flex justify-end border-t border-slate-200 pt-4">
               <button

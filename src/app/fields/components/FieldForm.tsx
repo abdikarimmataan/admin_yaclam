@@ -1,11 +1,12 @@
 "use client";
 
 import type { FormField } from "@/app/frontend/CMS/config/cms-field-types";
+import { IconSelectField } from "@/shared/components/IconSelectField";
 
 const PLACEHOLDERS: Record<string, string> = {
   name: "e.g. Data Science",
   description: "e.g. Data analysis and machine learning tracks.",
-  icon: "e.g. chart-bar",
+  sortOrder: "e.g. 0",
 };
 
 type FieldFormProps = {
@@ -29,6 +30,18 @@ function FieldInput({
   const inputClass = `w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/15 ${
     error ? "border-red-400" : "border-slate-300"
   }`;
+
+  if (field.key === "icon") {
+    return (
+      <IconSelectField
+        label={field.label}
+        required={field.required}
+        value={String(value ?? "")}
+        onChange={(v) => onChange(v)}
+        error={error}
+      />
+    );
+  }
 
   if (field.type === "boolean") {
     return (
@@ -86,9 +99,6 @@ function FieldInput({
 export function FieldForm({ fields, form, formErrors, onChange }: FieldFormProps) {
   return (
     <div className="space-y-4">
-      {formErrors._form && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{formErrors._form}</p>
-      )}
       {fields.map((field) => (
         <FieldInput
           key={field.key}

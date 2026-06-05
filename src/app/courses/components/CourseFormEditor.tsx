@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Trash2 } from "lucide-react";
 import type { ApiError } from "@/config/api";
 import { CollapsibleFormPanel } from "@/app/frontend/CMS/components/CollapsibleFormPanel";
 import { CourseMediaPanel } from "@/app/courses/components/CourseMediaPanel";
@@ -19,6 +19,7 @@ import {
 } from "@/app/courses/validation/course.validation";
 import type { FieldOption } from "@/app/courses/components/CourseMediaPanel";
 import { confirmDelete, showError } from "@/shared/utils/sweetalert";
+import { toast } from "@/shared/utils/toast";
 
 type CourseFormEditorProps = {
   recordId: string | null;
@@ -44,8 +45,6 @@ export function CourseFormEditor({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"success" | "error" | "">("");
 
   const load = useCallback(async () => {
     if (!recordId) {
@@ -59,16 +58,13 @@ export function CourseFormEditor({
 
     setActiveRecordId(recordId);
     setLoading(true);
-    setMessage("");
-    setMessageType("");
     try {
       const record = await courseApi.getById(recordId);
       const nextForm = courseRecordToForm(record);
       setForm(nextForm);
       setSelectedFieldId(String(nextForm.fieldId ?? ""));
     } catch (err) {
-      setMessage((err as ApiError).message || "Failed to load course");
-      setMessageType("error");
+      toast.error((err as ApiError).message || "Failed to load course");
     } finally {
       setLoading(false);
     }
@@ -80,8 +76,6 @@ export function CourseFormEditor({
 
   const patchForm = (key: string, value: unknown) => {
     setForm((prev) => ({ ...prev, [key]: value }));
-    setMessage("");
-    setMessageType("");
     setErrors((prev) => {
       const next = { ...prev };
       delete next[key];
@@ -112,8 +106,6 @@ export function CourseFormEditor({
     const hadRecord = Boolean(activeRecordId);
     setSaving(true);
     setErrors({});
-    setMessage("");
-    setMessageType("");
 
     try {
       const saved = await courseApi.save(activeRecordId, payload, uploadFiles);
@@ -127,13 +119,11 @@ export function CourseFormEditor({
         await courseApi.updateStatus(savedId, form.status !== false);
       }
 
-      setMessage(hadRecord ? "Course updated." : "Course created.");
-      setMessageType("success");
+      toast.success(hadRecord ? "Course updated." : "Course created.");
       onSaved();
     } catch (err) {
       const apiErr = err as ApiError;
-      setMessage(apiErr.message || "Save failed");
-      setMessageType("error");
+      toast.error(apiErr.message || "Save failed");
       if (apiErr.errors?.length) {
         const fieldErrors: Record<string, string> = {};
         apiErr.errors.forEach((e) => {
@@ -245,19 +235,6 @@ export function CourseFormEditor({
                 />
               ))}
             </div>
-
-            {message && (
-              <p
-                className={`mt-3 flex items-center gap-1.5 text-sm ${
-                  messageType === "success" ? "text-green-700" : "text-red-600"
-                }`}
-              >
-                {messageType === "success" && (
-                  <CheckCircle2 className="h-4 w-4 shrink-0" />
-                )}
-                {message}
-              </p>
-            )}
 
             <div className="mt-4 flex justify-end border-t border-slate-200 pt-4">
               <button

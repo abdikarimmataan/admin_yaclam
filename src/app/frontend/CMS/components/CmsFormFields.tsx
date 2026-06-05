@@ -1,8 +1,11 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { FormField } from "@/app/frontend/CMS/config/api-modules";
 import { FooterColumnsEditor } from "@/app/frontend/CMS/components/FooterColumnsEditor";
 import { StatsListEditor } from "@/app/frontend/CMS/components/StatsListEditor";
+import { IconSelectField } from "@/shared/components/IconSelectField";
+import { formFieldDomId } from "@/shared/utils/form-validation";
 
 type CmsFormFieldsProps = {
   fields: FormField[];
@@ -24,7 +27,7 @@ function numberInputValue(value: unknown): number {
 
 type FieldSegment =
   | { kind: "grid"; columns: 2; fields: FormField[] }
-  | { kind: "row"; columns: 2 | 4; fields: FormField[] };
+  | { kind: "row"; columns: 2 | 3 | 4; fields: FormField[] };
 
 function segmentFields(fields: FormField[]): FieldSegment[] {
   const segments: FieldSegment[] = [];
@@ -65,6 +68,27 @@ function segmentFields(fields: FormField[]): FieldSegment[] {
   return segments;
 }
 
+function FieldAnchor({
+  fieldKey,
+  error,
+  children,
+}: {
+  fieldKey: string;
+  error?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      id={formFieldDomId(fieldKey)}
+      data-form-field={fieldKey}
+      aria-invalid={error ? true : undefined}
+      className={error ? "rounded-md ring-1 ring-red-200 ring-offset-1" : undefined}
+    >
+      {children}
+    </div>
+  );
+}
+
 function FormFieldControl({
   field,
   value,
@@ -80,27 +104,43 @@ function FormFieldControl({
   compact?: boolean;
   halfRow?: boolean;
 }) {
+  if (field.key === "icon") {
+    return (
+      <FieldAnchor fieldKey={field.key} error={err}>
+        <IconSelectField
+          label={field.label}
+          required={field.required}
+          value={textInputValue(value)}
+          onChange={(v) => onChange(field.key, v)}
+          error={err}
+        />
+      </FieldAnchor>
+    );
+  }
+
   if (field.type === "boolean") {
     return (
-      <label
-        className={`flex w-full flex-col gap-1.5 text-sm font-medium text-gray-700 ${
-          halfRow ? "" : compact ? "h-full justify-end" : "sm:col-span-2"
-        }`}
-      >
-        <span className="text-sm font-semibold text-gray-700">
-          {field.label}
-          {field.required && <span className="text-red-500"> *</span>}
-        </span>
-        <span className="flex min-h-[38px] items-center gap-2">
-          <input
-            type="checkbox"
-            checked={!!value}
-            onChange={(e) => onChange(field.key, e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-blue-600"
-          />
-          <span className="text-xs text-gray-500">{value ? "Visible" : "Hidden"}</span>
-        </span>
-      </label>
+      <FieldAnchor fieldKey={field.key} error={err}>
+        <label
+          className={`flex w-full flex-col gap-1.5 text-sm font-medium text-gray-700 ${
+            halfRow ? "" : compact ? "h-full justify-end" : "sm:col-span-2"
+          }`}
+        >
+          <span className="text-sm font-semibold text-gray-700">
+            {field.label}
+            {field.required && <span className="text-red-500"> *</span>}
+          </span>
+          <span className="flex min-h-[38px] items-center gap-2">
+            <input
+              type="checkbox"
+              checked={!!value}
+              onChange={(e) => onChange(field.key, e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600"
+            />
+            <span className="text-xs text-gray-500">{value ? "Visible" : "Hidden"}</span>
+          </span>
+        </label>
+      </FieldAnchor>
     );
   }
 
@@ -110,41 +150,47 @@ function FormFieldControl({
 
   if (field.type === "textarea") {
     return (
-      <div className={compact ? undefined : "sm:col-span-2"}>
-        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-          {field.label}
-          {field.required && <span className="text-red-500"> *</span>}
-        </label>
-        <textarea
-          rows={3}
-          value={textInputValue(value)}
-          onChange={(e) => onChange(field.key, e.target.value)}
-          className={common}
-        />
-        {err && <p className="mt-1 text-sm text-red-600">{err}</p>}
-      </div>
+      <FieldAnchor fieldKey={field.key} error={err}>
+        <div className={compact ? undefined : "sm:col-span-2"}>
+          <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+            {field.label}
+            {field.required && <span className="text-red-500"> *</span>}
+          </label>
+          <textarea
+            rows={3}
+            value={textInputValue(value)}
+            onChange={(e) => onChange(field.key, e.target.value)}
+            className={common}
+          />
+          {err && <p className="mt-1 text-sm text-red-600">{err}</p>}
+        </div>
+      </FieldAnchor>
     );
   }
 
   if (field.type === "statsList") {
     return (
-      <StatsListEditor
-        label={field.label}
-        value={value}
-        error={err}
-        onChange={(items) => onChange(field.key, items)}
-      />
+      <FieldAnchor fieldKey={field.key} error={err}>
+        <StatsListEditor
+          label={field.label}
+          value={value}
+          error={err}
+          onChange={(items) => onChange(field.key, items)}
+        />
+      </FieldAnchor>
     );
   }
 
   if (field.type === "footerColumnsList") {
     return (
-      <FooterColumnsEditor
-        label={field.label}
-        value={value}
-        error={err}
-        onChange={(items) => onChange(field.key, items)}
-      />
+      <FieldAnchor fieldKey={field.key} error={err}>
+        <FooterColumnsEditor
+          label={field.label}
+          value={value}
+          error={err}
+          onChange={(items) => onChange(field.key, items)}
+        />
+      </FieldAnchor>
     );
   }
 
@@ -160,59 +206,65 @@ function FormFieldControl({
           ? "name|icon|isVisible  (one per line)"
           : "title|description|order|isVisible  (one per line)";
     return (
-      <div className={compact ? undefined : "sm:col-span-2"}>
-        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-          {field.label}
-          {field.required && <span className="text-red-500"> *</span>}
-        </label>
-        <textarea
-          rows={4}
-          value={textInputValue(value)}
-          onChange={(e) => onChange(field.key, e.target.value)}
-          className={`${common} font-mono text-xs`}
-          placeholder={placeholder}
-        />
-        <p className="mt-1 text-xs text-gray-500">Use | separator. Boolean: true/false.</p>
-        {err && <p className="mt-1 text-sm text-red-600">{err}</p>}
-      </div>
+      <FieldAnchor fieldKey={field.key} error={err}>
+        <div className={compact ? undefined : "sm:col-span-2"}>
+          <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+            {field.label}
+            {field.required && <span className="text-red-500"> *</span>}
+          </label>
+          <textarea
+            rows={4}
+            value={textInputValue(value)}
+            onChange={(e) => onChange(field.key, e.target.value)}
+            className={`${common} font-mono text-xs`}
+            placeholder={placeholder}
+          />
+          <p className="mt-1 text-xs text-gray-500">Use | separator. Boolean: true/false.</p>
+          {err && <p className="mt-1 text-sm text-red-600">{err}</p>}
+        </div>
+      </FieldAnchor>
     );
   }
 
   if (field.type === "stringList") {
     return (
-      <div className={compact ? undefined : "sm:col-span-2"}>
+      <FieldAnchor fieldKey={field.key} error={err}>
+        <div className={compact ? undefined : "sm:col-span-2"}>
+          <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+            {field.label}
+            {field.required && <span className="text-red-500"> *</span>}
+          </label>
+          <input
+            type="text"
+            value={textInputValue(value)}
+            onChange={(e) => onChange(field.key, e.target.value)}
+            className={common}
+            placeholder="item1, item2, item3"
+          />
+          {err && <p className="mt-1 text-sm text-red-600">{err}</p>}
+        </div>
+      </FieldAnchor>
+    );
+  }
+
+  return (
+    <FieldAnchor fieldKey={field.key} error={err}>
+      <div>
         <label className="mb-1.5 block text-sm font-semibold text-gray-700">
           {field.label}
           {field.required && <span className="text-red-500"> *</span>}
         </label>
         <input
-          type="text"
-          value={textInputValue(value)}
-          onChange={(e) => onChange(field.key, e.target.value)}
+          type={field.type === "number" ? "number" : field.type === "email" ? "email" : "text"}
+          value={field.type === "number" ? numberInputValue(value) : textInputValue(value)}
+          onChange={(e) =>
+            onChange(field.key, field.type === "number" ? Number(e.target.value) : e.target.value)
+          }
           className={common}
-          placeholder="item1, item2, item3"
         />
         {err && <p className="mt-1 text-sm text-red-600">{err}</p>}
       </div>
-    );
-  }
-
-  return (
-    <div>
-      <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-        {field.label}
-        {field.required && <span className="text-red-500"> *</span>}
-      </label>
-      <input
-        type={field.type === "number" ? "number" : field.type === "email" ? "email" : "text"}
-        value={field.type === "number" ? numberInputValue(value) : textInputValue(value)}
-        onChange={(e) =>
-          onChange(field.key, field.type === "number" ? Number(e.target.value) : e.target.value)
-        }
-        className={common}
-      />
-      {err && <p className="mt-1 text-sm text-red-600">{err}</p>}
-    </div>
+    </FieldAnchor>
   );
 }
 
@@ -224,13 +276,16 @@ export function CmsFormFields({ fields, form, errors, onChange }: CmsFormFieldsP
       {segments.map((segment, index) => {
         if (segment.kind === "row") {
           const isHalfRow = segment.columns === 2;
+          const isTripleRow = segment.columns === 3;
           return (
             <div
               key={`row-${segment.fields[0]?.rowGroup ?? index}`}
               className={
-                isHalfRow
-                  ? "grid w-full grid-cols-1 gap-3.5 sm:grid-cols-2"
-                  : "grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4"
+                isTripleRow
+                  ? "grid w-full grid-cols-1 gap-3.5 sm:grid-cols-3"
+                  : isHalfRow
+                    ? "grid w-full grid-cols-1 gap-3.5 sm:grid-cols-2"
+                    : "grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4"
               }
             >
               {segment.fields.map((field) => (
@@ -240,8 +295,8 @@ export function CmsFormFields({ fields, form, errors, onChange }: CmsFormFieldsP
                   value={form[field.key]}
                   err={errors[field.key]}
                   onChange={onChange}
-                  compact={!isHalfRow}
-                  halfRow={isHalfRow}
+                  compact={!isHalfRow && !isTripleRow}
+                  halfRow={isHalfRow || isTripleRow}
                 />
               ))}
             </div>

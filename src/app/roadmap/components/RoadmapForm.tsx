@@ -1,16 +1,17 @@
 "use client";
 
 import type { FormField } from "@/app/frontend/CMS/config/cms-field-types";
+import { IconSelectField } from "@/shared/components/IconSelectField";
 import { RoadmapLearningPathEditor } from "@/app/roadmap/components/RoadmapLearningPathEditor";
 import { RoadmapSkillsEditor } from "@/app/roadmap/components/RoadmapSkillsEditor";
 import { ROADMAP_DEMAND_LEVELS, ROADMAP_FULL_WIDTH_KEYS } from "@/app/roadmap/model/roadmap.model";
+import { getValueByPath } from "@/app/frontend/CMS/lib/cms-utils";
+import { timeToJobReadyToDateInputValue } from "@/app/roadmap/validation/roadmap.validation";
 
 const PLACEHOLDERS: Record<string, string> = {
   title: "e.g. Data Analyst",
   description: "Short summary of this career path.",
-  icon: "e.g. BarChart3",
   salary: "e.g. €38k–€58k",
-  months: "e.g. 8",
 };
 
 type RoadmapFormProps = {
@@ -35,10 +36,25 @@ function RoadmapInput({
     error ? "border-red-400" : "border-slate-300"
   }`;
 
+  if (field.key === "icon") {
+    return (
+      <IconSelectField
+        label={field.label}
+        required={field.required}
+        value={String(value ?? "")}
+        onChange={(v) => onChange(v)}
+        error={error}
+      />
+    );
+  }
+
   if (field.key === "demand") {
     return (
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-slate-700">{field.label}</label>
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">
+          {field.label}
+          {field.required && <span className="text-red-500"> *</span>}
+        </label>
         <select
           value={String(value ?? "High")}
           onChange={(e) => onChange(e.target.value)}
@@ -55,25 +71,42 @@ function RoadmapInput({
     );
   }
 
-  if (field.key === "sortOrder" || field.key === "months") {
+  if (field.key === "sortOrder") {
     return (
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-slate-700">{field.label}</label>
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">
+          {field.label}
+          {field.required && <span className="text-red-500"> *</span>}
+        </label>
         <input
           type="text"
-          inputMode="numeric"
-          value={
-            value === "" || value === undefined || value === null ? "" : String(value)
-          }
-          onChange={(e) => {
-            const v = e.target.value;
-            if (v === "" || /^\d+$/.test(v)) {
-              onChange(v === "" ? "" : Number(v));
-            }
-          }}
-          placeholder={PLACEHOLDERS[field.key]}
+          value={String(value ?? "")}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="e.g. 1"
           className={inputClass}
         />
+        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      </div>
+    );
+  }
+
+  if (field.key === "timeToJobReady") {
+    return (
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">
+          {field.label}
+          {field.required && <span className="text-red-500"> *</span>}
+        </label>
+        <input
+          type="date"
+          value={timeToJobReadyToDateInputValue(value)}
+          onChange={(e) => onChange(e.target.value)}
+          className={inputClass}
+        />
+        <p className="mt-1 text-xs text-slate-500">
+          Saves to <code className="text-slate-600">timeToJobReady</code> as YYYY/MM/DD (not the legacy{" "}
+          <code className="text-slate-600">months</code> field).
+        </p>
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
       </div>
     );
@@ -116,6 +149,11 @@ function RoadmapInput({
   );
 }
 
+function formFieldValue(form: Record<string, unknown>, key: string): unknown {
+  if (key in form) return form[key];
+  return getValueByPath(form, key);
+}
+
 function chunkFields<T>(items: T[], size: number): T[][] {
   const rows: T[][] = [];
   for (let i = 0; i < items.length; i += size) {
@@ -133,17 +171,13 @@ export function RoadmapForm({ fields, form, formErrors, onChange }: RoadmapFormP
 
   return (
     <div className="space-y-4">
-      {formErrors._form && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{formErrors._form}</p>
-      )}
-
       {gridRows.map((row, rowIndex) => (
         <div key={rowIndex} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {row.map((field) => (
             <RoadmapInput
               key={field.key}
               field={field}
-              value={form[field.key]}
+              value={formFieldValue(form, field.key)}
               error={formErrors[field.key]}
               onChange={(value) => onChange(field.key, value)}
             />
@@ -154,7 +188,7 @@ export function RoadmapForm({ fields, form, formErrors, onChange }: RoadmapFormP
       {descriptionField && (
         <RoadmapInput
           field={descriptionField}
-          value={form[descriptionField.key]}
+          value={formFieldValue(form, descriptionField.key)}
           error={formErrors[descriptionField.key]}
           onChange={(value) => onChange(descriptionField.key, value)}
         />

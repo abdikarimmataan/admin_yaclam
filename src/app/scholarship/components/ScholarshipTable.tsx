@@ -2,11 +2,17 @@
 
 import { Pencil } from "lucide-react";
 import type { ScholarshipRecord } from "@/app/scholarship/model/scholarship.model";
-import { getScholarshipLabel } from "@/app/scholarship/model/scholarship.model";
+import {
+  DUPLICATE_SORT_ORDER_TOOLTIP,
+  getScholarshipLabel,
+} from "@/app/scholarship/model/scholarship.model";
+import { InfoHoverTooltip } from "@/shared/components/InfoHoverTooltip";
+import { isImageAsset, resolveAssetUrl } from "@/shared/utils/asset-url";
 
 type ScholarshipTableProps = {
   loading: boolean;
   paginated: ScholarshipRecord[];
+  duplicateSortOrders: Set<number>;
   startIdx: number;
   search: string;
   page: number;
@@ -26,6 +32,7 @@ type ScholarshipTableProps = {
 export function ScholarshipTable({
   loading,
   paginated,
+  duplicateSortOrders,
   startIdx,
   search,
   page,
@@ -54,10 +61,10 @@ export function ScholarshipTable({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[560px] text-xs">
+        <table className="w-full min-w-[640px] text-xs">
           <thead>
             <tr className="border-b border-slate-100">
-              {["No.", "Name", "Provider", "Visible", "Actions"].map((h) => (
+              {["No.", "Sort", "Name", "Country", "Provider", "Visible", "Actions"].map((h) => (
                 <th
                   key={h}
                   className={`px-3 py-2 text-left text-xs font-semibold text-slate-900 ${
@@ -72,7 +79,7 @@ export function ScholarshipTable({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-3 py-10 text-center text-xs text-slate-500">
+                <td colSpan={7} className="px-3 py-10 text-center text-xs text-slate-500">
                   <div className="flex flex-col items-center gap-2">
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />
                     Loading...
@@ -81,7 +88,7 @@ export function ScholarshipTable({
               </tr>
             ) : paginated.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-3 py-10 text-center text-xs text-slate-500">
+                <td colSpan={7} className="px-3 py-10 text-center text-xs text-slate-500">
                   No scholarships found
                 </td>
               </tr>
@@ -90,15 +97,58 @@ export function ScholarshipTable({
                 const rowNum = startIdx + i + 1;
                 const id = String(item.id ?? i);
                 const isVisible = item.isVisible !== false;
+                const sortOrder =
+                  item.sortOrder == null || !Number.isFinite(Number(item.sortOrder))
+                    ? null
+                    : Number(item.sortOrder);
+                const isDuplicateSort =
+                  sortOrder != null && duplicateSortOrders.has(sortOrder);
+                const country = String(item.country ?? "").trim();
+                const flag = String(item.flag ?? "").trim();
+                const flagSrc = isImageAsset(flag) ? resolveAssetUrl(flag) : "";
 
                 return (
                   <tr
                     key={id}
-                    className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/80"
+                    className={`border-b border-slate-100 last:border-b-0 hover:bg-slate-50/80 ${
+                      isDuplicateSort ? "bg-red-50/70" : ""
+                    }`}
                   >
                     <td className="px-3 py-2 tabular-nums text-slate-700">{rowNum}</td>
+                    <td className="px-3 py-2">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span
+                          className={`min-w-[1.75rem] tabular-nums ${
+                            isDuplicateSort ? "font-semibold text-red-600" : "text-slate-700"
+                          }`}
+                        >
+                          {sortOrder ?? "—"}
+                        </span>
+                        {isDuplicateSort && (
+                          <InfoHoverTooltip
+                            content={DUPLICATE_SORT_ORDER_TOOLTIP}
+                            tone="danger"
+                          />
+                        )}
+                      </span>
+                    </td>
                     <td className="px-3 py-2 font-medium text-slate-900">
                       {getScholarshipLabel(item)}
+                    </td>
+                    <td className="px-3 py-2 text-slate-600">
+                      {country ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          {flagSrc ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={flagSrc} alt="" className="h-4 w-4 shrink-0 object-contain" />
+                          ) : flag ? (
+                            <span className="text-sm leading-none">{flag}</span>
+                          ) : null}
+                          <span>{country}</span>
+                        </span>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="px-3 py-2 text-slate-600">{String(item.provider ?? "—")}</td>
                     <td className="px-3 py-2">
