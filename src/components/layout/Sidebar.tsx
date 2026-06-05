@@ -3,16 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { logout } from "@/services/auth.service";
-import type { SidebarGroup, SidebarNavItem } from "@/config/api-modules";
-import { SIDEBAR_GROUPS } from "@/config/api-modules";
+import { logout } from "@/app/login/service/auth.service";
+import type { NavGroup, NavItem } from "@/config/navigation";
+import { NAVIGATION } from "@/config/navigation";
 import { ChevronDown, ChevronRight, LogOut, Menu } from "lucide-react";
 
 function itemIsActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-function navItemActive(pathname: string, item: SidebarNavItem): boolean {
+function navItemActive(pathname: string, item: NavItem): boolean {
   if (item.href && itemIsActive(pathname, item.href)) return true;
   return item.children?.some((c) => itemIsActive(pathname, c.href)) ?? false;
 }
@@ -22,7 +22,7 @@ function NavItem({
   isOpen,
   pathname,
 }: {
-  item: SidebarNavItem;
+  item: NavItem;
   isOpen: boolean;
   pathname: string;
 }) {
@@ -105,7 +105,7 @@ function NavGroup({
   isOpen,
   pathname,
 }: {
-  group: SidebarGroup;
+  group: NavGroup;
   isOpen: boolean;
   pathname: string;
 }) {
@@ -162,7 +162,7 @@ export function Sidebar({
       </div>
 
       <nav className="flex-1 overflow-y-auto p-2.5">
-        {SIDEBAR_GROUPS.map((group) => (
+        {NAVIGATION.map((group) => (
           <NavGroup key={group.label} group={group} isOpen={isOpen} pathname={pathname} />
         ))}
       </nav>
