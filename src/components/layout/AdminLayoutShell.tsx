@@ -1,7 +1,7 @@
 "use client";
 
-import { AuthGuard } from "@/components/auth/AuthGuard";
-import { AdminErrorBoundary } from "@/components/common/AdminErrorBoundary";
+import { AuthGuard } from "@/app/login/components/AuthGuard";
+import { AdminErrorBoundary } from "@/shared/components/AdminErrorBoundary";
 import { useEffect, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";

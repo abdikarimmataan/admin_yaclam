@@ -1,6 +1,6 @@
 "use client";
 
-import { getStoredUser, logout } from "@/services/auth.service";
+import { getStoredUser, logout } from "@/app/login/service/auth.service";
 import { Bell, ChevronDown, LogOut, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
