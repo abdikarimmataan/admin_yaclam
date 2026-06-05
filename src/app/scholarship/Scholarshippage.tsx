@@ -8,7 +8,9 @@ import { ScholarshipModal } from "@/app/scholarship/components/ScholarshipModal"
 import { ScholarshipTable } from "@/app/scholarship/components/ScholarshipTable";
 import {
   SCHOLARSHIP_FORM_FIELDS,
-  getNextSortOrder,
+  SCHOLARSHIP_HIDDEN_FORM_KEYS,
+  getDuplicateSortOrders,
+  getNextScholarshipSortOrderSuggestion,
   sortScholarshipsByLatestSaved,
   type ScholarshipRecord,
 } from "@/app/scholarship/model/scholarship.model";
@@ -22,8 +24,12 @@ import {
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { pickFormValues } from "@/app/frontend/CMS/lib/cms-utils";
 import { confirmVisibilityChange, showError } from "@/shared/utils/sweetalert";
+import { toast } from "@/shared/utils/toast";
 
-const scholarshipKeys = SCHOLARSHIP_FORM_FIELDS.map((f) => f.key);
+const scholarshipFormKeys = [
+  ...SCHOLARSHIP_FORM_FIELDS.map((f) => f.key),
+  ...SCHOLARSHIP_HIDDEN_FORM_KEYS,
+];
 
 export function Scholarshippage() {
   const [items, setItems] = useState<ScholarshipRecord[]>([]);
@@ -32,7 +38,6 @@ export function Scholarshippage() {
   const debouncedSearch = useDebounce(search, 300);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [listError, setListError] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<ScholarshipRecord | null>(null);
@@ -43,12 +48,11 @@ export function Scholarshippage() {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    setListError("");
     try {
       const res = await scholarshipApi.getAll({ page: 1, pageSize: 500 });
       setItems(sortScholarshipsByLatestSaved((res.data ?? []) as ScholarshipRecord[]));
     } catch (err) {
-      setListError((err as ApiError).message || "Failed to load scholarships");
+      toast.error((err as ApiError).message || "Failed to load scholarships");
       setItems([]);
     } finally {
       setLoading(false);
@@ -59,13 +63,16 @@ export function Scholarshippage() {
     fetchItems();
   }, [fetchItems]);
 
+  const duplicateSortOrders = useMemo(() => getDuplicateSortOrders(items), [items]);
+
   const filtered = useMemo(() => {
     if (!debouncedSearch) return items;
     const q = debouncedSearch.toLowerCase();
     return items.filter((item) => {
       const name = String(item.name ?? item.title ?? "").toLowerCase();
       const provider = String(item.provider ?? "").toLowerCase();
-      return name.includes(q) || provider.includes(q);
+      const country = String(item.country ?? "").toLowerCase();
+      return name.includes(q) || provider.includes(q) || country.includes(q);
     });
   }, [items, debouncedSearch]);
 
@@ -79,12 +86,13 @@ export function Scholarshippage() {
 
   const openCreate = () => {
     setEditing(null);
-    const initial = pickFormValues(null, scholarshipKeys);
+    const initial = pickFormValues(null, scholarshipFormKeys);
     initial.funding = "Full";
     initial.benefits = [];
     initial.eligibility = [];
     initial.documents = [];
-    initial.sortOrder = getNextSortOrder(items);
+    initial.sortOrder = getNextScholarshipSortOrderSuggestion(items);
+    initial.deadline = "";
     setForm(initial);
     setFormErrors({});
     setShowModal(true);
@@ -97,7 +105,7 @@ export function Scholarshippage() {
     try {
       const record = await scholarshipApi.getById(id);
       setEditing(record);
-      setForm(toScholarshipFormValues(pickFormValues(record, scholarshipKeys)));
+      setForm(toScholarshipFormValues(pickFormValues(record, scholarshipFormKeys)));
       setFormErrors({});
       setShowModal(true);
     } catch (err) {
@@ -117,6 +125,7 @@ export function Scholarshippage() {
     const errors = validateScholarshipForm(form, Boolean(editing));
     if (Object.keys(errors).length) {
       setFormErrors(errors);
+      toast.error("Please fix the highlighted fields");
       return;
     }
 
@@ -128,11 +137,13 @@ export function Scholarshippage() {
       } else {
         await scholarshipApi.create(payload);
       }
+      toast.success(editing ? "Updated successfully" : "Created successfully");
       closeModal();
       setPage(1);
       await fetchItems();
     } catch (err) {
-      setFormErrors({ _form: (err as ApiError).message });
+      toast.error((err as ApiError).message);
+      setFormErrors({});
     } finally {
       setSubmitting(false);
     }
@@ -174,15 +185,10 @@ export function Scholarshippage() {
         </button>
       </div>
 
-      {listError && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-          {listError}
-        </div>
-      )}
-
       <ScholarshipTable
         loading={loading}
         paginated={paginated}
+        duplicateSortOrders={duplicateSortOrders}
         startIdx={startIdx}
         search={search}
         page={page}

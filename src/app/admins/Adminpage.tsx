@@ -16,6 +16,7 @@ import {
 import type { ApiUser } from "@/app/users/model/user.model";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { confirmStatusChange, showError } from "@/shared/utils/sweetalert";
+import { toast } from "@/shared/utils/toast";
 
 const emptyForm = (): AdminFormState => ({
   full_name: "",
@@ -32,7 +33,6 @@ export function Adminpage() {
   const debouncedSearch = useDebounce(search, 300);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [listError, setListError] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<AdminRow | null>(null);
@@ -43,12 +43,11 @@ export function Adminpage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    setListError("");
     try {
       const usersRes = await getAdminUsers({ page: 1, pageSize: 200 });
       setAdmins(((usersRes.data ?? []) as ApiUser[]).map(toAdminRow));
     } catch (err) {
-      setListError((err as ApiError).message || "Failed to load admins");
+      toast.error((err as ApiError).message || "Failed to load admins");
       setAdmins([]);
     } finally {
       setLoading(false);
@@ -111,6 +110,7 @@ export function Adminpage() {
     if (!editing && !form.password.trim()) errors.password = "Required";
     if (Object.keys(errors).length) {
       setFormErrors(errors);
+      toast.error("Please fix the highlighted fields");
       return;
     }
 
@@ -131,10 +131,12 @@ export function Adminpage() {
           profile: { full_name: form.full_name.trim() },
         });
       }
+      toast.success(editing ? "Updated successfully" : "Created successfully");
       closeModal();
       await fetchData();
     } catch (err) {
-      setFormErrors({ _form: (err as ApiError).message });
+      toast.error((err as ApiError).message);
+      setFormErrors({});
     } finally {
       setSubmitting(false);
     }
@@ -174,12 +176,6 @@ export function Adminpage() {
           <Plus className="h-4 w-4" />
         </button>
       </div>
-
-      {listError && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-          {listError}
-        </div>
-      )}
 
       <AdminTable
         loading={loading}

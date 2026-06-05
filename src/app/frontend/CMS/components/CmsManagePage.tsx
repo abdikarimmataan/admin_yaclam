@@ -14,6 +14,7 @@ import {
   setValueByPath,
 } from "@/app/frontend/CMS/lib/cms-utils";
 import { createCmsApi } from "@/app/frontend/CMS/services/cms-api";
+import { toast } from "@/shared/utils/toast";
 
 type CmsManagePageProps = {
   config: CmsModuleConfig;
@@ -93,7 +94,6 @@ export function CmsManagePage({ config }: CmsManagePageProps) {
   const debouncedSearch = useDebounce(search, 300);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [listError, setListError] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<CmsRecord | null>(null);
@@ -109,12 +109,11 @@ export function CmsManagePage({ config }: CmsManagePageProps) {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    setListError("");
     try {
       const res = await api.getAll({ page: 1, pageSize: 500 });
       setItems((res.data ?? []) as CmsRecord[]);
     } catch (err) {
-      setListError((err as ApiError).message || "Failed to load data");
+      toast.error((err as ApiError).message || "Failed to load data");
       setItems([]);
     } finally {
       setLoading(false);
@@ -275,14 +274,16 @@ export function CmsManagePage({ config }: CmsManagePageProps) {
     try {
       if (editing?.id) {
         await api.update(String(editing.id), payload);
+        toast.success(`${config.label} updated.`);
       } else {
         await api.create(payload);
+        toast.success(`${config.label} created.`);
       }
       closeModal();
       await fetchItems();
     } catch (err) {
       const apiErr = err as ApiError;
-      setFormErrors({ _form: apiErr.message });
+      toast.error(apiErr.message || "Save failed");
     } finally {
       setSubmitting(false);
     }
@@ -446,12 +447,6 @@ export function CmsManagePage({ config }: CmsManagePageProps) {
         </div>
       </div>
 
-      {listError && (
-        <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {listError}
-        </div>
-      )}
-
       <DataTable
         title={config.label}
         data={paginated}
@@ -600,11 +595,6 @@ export function CmsManagePage({ config }: CmsManagePageProps) {
           }
         >
           <div className="grid max-h-[60vh] gap-3.5 overflow-y-auto">
-            {formErrors._form && (
-              <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
-                {formErrors._form}
-              </p>
-            )}
             {config.formFields?.map(renderField)}
           </div>
         </Modal>

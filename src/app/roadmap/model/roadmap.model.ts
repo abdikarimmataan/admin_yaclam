@@ -17,6 +17,8 @@ export type RoadmapRecord = {
   skills?: string[];
   demand?: string;
   salary?: string;
+  timeToJobReady?: string;
+  timeToJobReadyDisplay?: string;
   months?: number;
   skillsRequired?: number;
   steps?: RoadmapStep[];
@@ -35,15 +37,35 @@ export type RoadmapRecord = {
 
 export const ROADMAP_API_PATH = "/roadmap";
 
+export const DUPLICATE_SORT_ORDER_TOOLTIP =
+  "Duplicate sort order. This roadmap will not appear on the homepage.";
+
+export function getDuplicateSortOrders(items: RoadmapRecord[]): Set<number> {
+  const counts = new Map<number, number>();
+
+  for (const item of items) {
+    if (item.sortOrder == null || !Number.isFinite(Number(item.sortOrder))) continue;
+    const order = Number(item.sortOrder);
+    counts.set(order, (counts.get(order) ?? 0) + 1);
+  }
+
+  const duplicates = new Set<number>();
+  counts.forEach((count, order) => {
+    if (count > 1) duplicates.add(order);
+  });
+
+  return duplicates;
+}
+
 export const ROADMAP_FORM_FIELDS: FormField[] = [
   { key: "title", label: "Title", type: "text", required: true },
-  { key: "icon", label: "Icon", type: "text" },
-  { key: "demand", label: "Market Demand", type: "text" },
-  { key: "salary", label: "Salary Range", type: "text" },
-  { key: "months", label: "Time to Job Ready (months)", type: "number" },
-  { key: "sortOrder", label: "Sort Order", type: "number" },
-  { key: "ctaButton.label", label: "CTA Button Label", type: "text" },
-  { key: "ctaButton.url", label: "CTA Button URL", type: "text" },
+  { key: "icon", label: "Icon", type: "text", required: true },
+  { key: "demand", label: "Market Demand", type: "text", required: true },
+  { key: "salary", label: "Salary Range", type: "text", required: true },
+  { key: "timeToJobReady", label: "Time to Job Ready", type: "text", required: true },
+  { key: "sortOrder", label: "Sort Order", type: "text", required: true },
+  { key: "ctaButton.label", label: "CTA Button Label", type: "text", required: true },
+  { key: "ctaButton.url", label: "CTA Button URL", type: "text", required: true },
   { key: "description", label: "Description", type: "textarea" },
   { key: "skills", label: "Skills", type: "text" },
   { key: "steps", label: "Learning Path", type: "stepsList" },
@@ -58,20 +80,27 @@ export const ROADMAP_CREATE_KEYS = [
   "icon",
   "demand",
   "salary",
-  "months",
+  "timeToJobReady",
   "skills",
   "steps",
   "sortOrder",
+  "ctaButton.label",
+  "ctaButton.url",
 ] as const;
 
 export function getRoadmapLabel(item: RoadmapRecord): string {
   return String(item.title ?? item.id ?? "—");
 }
 
-export function getNextSortOrder(items: RoadmapRecord[]): number {
-  if (!items.length) return 1;
-  const max = Math.max(0, ...items.map((item) => Number(item.sortOrder) || 0));
-  return max + 1;
+export function getNextRoadmapSortOrderSuggestion(items: RoadmapRecord[]): string {
+  if (items.length === 0) return "1";
+
+  const max = items.reduce((acc, item) => {
+    const n = Number(item.sortOrder);
+    return Number.isFinite(n) ? Math.max(acc, n) : acc;
+  }, 0);
+
+  return String(max + 1);
 }
 
 function recordTimestamp(item: RoadmapRecord): number {

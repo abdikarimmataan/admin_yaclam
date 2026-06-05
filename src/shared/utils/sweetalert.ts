@@ -1,4 +1,5 @@
 import Swal from "sweetalert2";
+import { toast } from "@/shared/utils/toast";
 
 export async function confirmDelete(itemName: string): Promise<boolean> {
   const result = await Swal.fire({
@@ -53,10 +54,9 @@ export async function confirmStatusChange(
 }
 
 export function showError(message: string) {
-  return Swal.fire({
-    title: "Error",
-    text: message,
-    icon: "error",
-    confirmButtonColor: "#0f172a",
-  });
+  toast.error(message);
+}
+
+export function showSuccess(message: string) {
+  toast.success(message);
 }

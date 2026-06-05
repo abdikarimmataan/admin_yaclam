@@ -27,6 +27,13 @@ export function validateTestimonialForm(
     errors.description = "Quote is required";
   }
 
+  const sortRaw = String(form.sortOrder ?? "").trim();
+  if (!sortRaw) {
+    errors.sortOrder = "Sort order is required";
+  } else if (!/^\d+$/.test(sortRaw)) {
+    errors.sortOrder = "Sort order must be a whole number";
+  }
+
   return errors;
 }
 
@@ -46,7 +53,7 @@ export function buildTestimonialPayload(
     let value: unknown = raw;
 
     if (key === "sortOrder") {
-      value = Number.isFinite(Number(raw)) ? Number(raw) : 0;
+      value = Number.parseInt(String(raw ?? "").trim(), 10);
     } else {
       value = String(raw ?? "");
     }
@@ -84,5 +91,10 @@ export function toTestimonialFormValues(item: Record<string, unknown>): Record<s
   const form: Record<string, unknown> = { ...item };
   const quote = String(form.description ?? form.text ?? "").trim();
   form.description = quote;
+
+  if (form.sortOrder != null && form.sortOrder !== "") {
+    form.sortOrder = String(form.sortOrder);
+  }
+
   return form;
 }

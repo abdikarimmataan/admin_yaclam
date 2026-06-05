@@ -24,6 +24,7 @@ import {
   updateUser,
   updateUserStatus,
 } from "@/app/users/service/user.service";
+import { toast } from "@/shared/utils/toast";
 
 type FormState = {
   full_name: string;
@@ -69,18 +70,16 @@ export function Userpage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [listError, setListError] = useState("");
 
   const fetchStudents = useCallback(async () => {
     setLoading(true);
-    setListError("");
     try {
       const res = await getStudents({ page: 1, pageSize: 500 });
       const rows = ((res.data ?? []) as ApiUser[]).map(toStudentRow);
       setStudents(rows);
     } catch (err) {
       const apiErr = err as ApiError;
-      setListError(apiErr.message || "Failed to load students");
+      toast.error(apiErr.message || "Failed to load students");
       setStudents([]);
     } finally {
       setLoading(false);
@@ -157,7 +156,10 @@ export function Userpage() {
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      toast.error("Please fix the highlighted fields");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -177,13 +179,14 @@ export function Userpage() {
           profile: { full_name: form.full_name.trim() },
         });
       }
+      toast.success(editingUser ? "Updated successfully" : "Created successfully");
       closeModal();
       await fetchStudents();
     } catch (err) {
       const apiErr = err as ApiError;
       applyApiFieldErrors(apiErr);
       if (!apiErr.errors?.length) {
-        setFormErrors({ _form: apiErr.message });
+        toast.error(apiErr.message);
       }
     } finally {
       setSubmitting(false);
@@ -241,12 +244,6 @@ export function Userpage() {
           </span>
         </div>
       </div>
-
-      {listError && (
-        <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {listError}
-        </div>
-      )}
 
       <DataTable
         title="Student List"
@@ -416,12 +413,6 @@ export function Userpage() {
           }
         >
           <div className="grid gap-3.5">
-            {formErrors._form && (
-              <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
-                {formErrors._form}
-              </p>
-            )}
-
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                 Full Name <span className="text-red-500">*</span>

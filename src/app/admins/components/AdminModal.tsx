@@ -95,10 +95,6 @@ export function AdminModal({
         </div>
 
         <div className="space-y-4 px-6 py-4">
-          {formErrors._form && (
-            <p className="text-xs text-red-600">{formErrors._form}</p>
-          )}
-
           <div className="grid grid-cols-2 gap-4">
             <Field label="Full Name" required error={formErrors.full_name}>
               <input

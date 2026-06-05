@@ -3,6 +3,7 @@
 import type { ApiError } from "@/config/api";
 import type { ValidationError } from "@/app/login/model/auth.model";
 import { adminLogin } from "@/app/login/service/auth.service";
+import { toast } from "@/shared/utils/toast";
 import { Eye, EyeOff, Lock, LogIn, Mail } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -16,16 +17,14 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError("");
     setFieldErrors({});
 
     if (!email.trim() || !password) {
-      setError("Email and password are required.");
+      toast.error("Email and password are required.");
       return;
     }
 
@@ -42,7 +41,7 @@ export function LoginForm() {
         });
         setFieldErrors(map);
       }
-      setError(apiErr.message || "Login failed. Please try again.");
+      toast.error(apiErr.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -50,12 +49,6 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="w-full space-y-4">
-      {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
       <div>
         <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-gray-700">
           Email

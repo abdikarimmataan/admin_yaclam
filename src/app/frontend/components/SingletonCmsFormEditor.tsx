@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { ApiError } from "@/config/api";
 import type { FormField } from "@/app/frontend/CMS/config/api-modules";
 import type { CmsFormPanel } from "@/app/frontend/CMS/config/course-cms-sections";
@@ -9,6 +9,11 @@ import { CollapsibleFormPanel } from "@/app/frontend/CMS/components/CollapsibleF
 import { buildFormPayload, emptyFormValues, recordToFormValues } from "@/app/frontend/CMS/lib/cms-form";
 import type { CmsRecord } from "@/config/api";
 import { loadSingleton, saveSingleton } from "@/app/frontend/CMS/services/singleton-cms";
+import { toast } from "@/shared/utils/toast";
+import {
+  applyFormValidationFeedback,
+  clearFieldError,
+} from "@/shared/utils/form-validation";
 
 type BlockState = {
   recordId: string | null;
@@ -16,8 +21,6 @@ type BlockState = {
   loading: boolean;
   saving: boolean;
   errors: Record<string, string>;
-  message: string;
-  messageType: "success" | "error" | "";
 };
 
 function initialBlockState(): BlockState {
@@ -27,8 +30,6 @@ function initialBlockState(): BlockState {
     loading: true,
     saving: false,
     errors: {},
-    message: "",
-    messageType: "",
   };
 }
 
@@ -90,9 +91,10 @@ export function SingletonCmsFormEditor({
   const [block, setBlock] = useState<BlockState>(() => initialBlockState());
 
   const load = useCallback(async () => {
-    setBlock((s) => ({ ...s, loading: true, message: "", messageType: "" }));
+    setBlock((s) => ({ ...s, loading: true }));
     try {
       const { record, error } = await loadSingleton(apiPath);
+      if (error) toast.error(error);
       setBlock((s) => ({
         ...s,
         recordId: record?.id ? String(record.id) : null,
@@ -100,16 +102,13 @@ export function SingletonCmsFormEditor({
           ? recordToFormValues(record, fields)
           : { ...emptyFormValues(fields), ...formDefaults },
         loading: false,
-        message: error ?? "",
-        messageType: error ? "error" : "",
       }));
     } catch {
+      toast.error("Failed to load");
       setBlock((s) => ({
         ...s,
         loading: false,
         form: { ...emptyFormValues(fields), ...formDefaults },
-        message: "Failed to load",
-        messageType: "error",
       }));
     }
   }, [apiPath, fields, formDefaults]);
@@ -122,8 +121,7 @@ export function SingletonCmsFormEditor({
     setBlock((s) => ({
       ...s,
       form: { ...s.form, [key]: value },
-      message: "",
-      messageType: "",
+      errors: clearFieldError(s.errors, key),
     }));
   };
 
@@ -131,30 +129,26 @@ export function SingletonCmsFormEditor({
     const { payload, errors } = buildFormPayload(block.form, fields);
     if (!payload) {
       setBlock((s) => ({ ...s, errors }));
+      applyFormValidationFeedback(errors, fields, { panels });
       return;
     }
 
     const hadRecord = Boolean(block.recordId);
     const body = preparePayload ? preparePayload(payload) : payload;
-    setBlock((s) => ({ ...s, saving: true, errors: {}, message: "", messageType: "" }));
+    setBlock((s) => ({ ...s, saving: true, errors: {} }));
 
     try {
       const saved = await saveSingleton(apiPath, block.recordId, body);
+      toast.success(hadRecord ? updatedMessage : createdMessage);
       setBlock((s) => ({
         ...s,
         recordId: saved.id ? String(saved.id) : s.recordId,
         form: recordToFormValues(saved as CmsRecord, fields),
         saving: false,
-        message: hadRecord ? updatedMessage : createdMessage,
-        messageType: "success",
       }));
     } catch (err) {
-      setBlock((s) => ({
-        ...s,
-        saving: false,
-        message: (err as ApiError).message || "Save failed",
-        messageType: "error",
-      }));
+      toast.error((err as ApiError).message || "Save failed");
+      setBlock((s) => ({ ...s, saving: false }));
     }
   };
 
@@ -198,19 +192,6 @@ export function SingletonCmsFormEditor({
                 />
               ))}
             </div>
-
-            {block.message && (
-              <p
-                className={`mt-3 flex items-center gap-1.5 text-sm ${
-                  block.messageType === "success" ? "text-green-700" : "text-red-600"
-                }`}
-              >
-                {block.messageType === "success" && (
-                  <CheckCircle2 className="h-4 w-4 shrink-0" />
-                )}
-                {block.message}
-              </p>
-            )}
 
             <div className={`mt-4 flex justify-end border-t pt-4 ${styles.border}`}>
               <button

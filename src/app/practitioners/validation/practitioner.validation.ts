@@ -23,6 +23,13 @@ export function validatePractitionerForm(
     }
   });
 
+  const sortRaw = String(form.sortOrder ?? "").trim();
+  if (!sortRaw) {
+    errors.sortOrder = "Sort order is required";
+  } else if (!/^\d+$/.test(sortRaw)) {
+    errors.sortOrder = "Sort order must be a whole number";
+  }
+
   return errors;
 }
 
@@ -41,7 +48,9 @@ export function buildPractitionerPayload(
     const raw = form[key];
     let value: unknown = raw;
 
-    if (key === "coursesCount" || key === "sortOrder") {
+    if (key === "sortOrder") {
+      value = Number.parseInt(String(raw ?? "").trim(), 10);
+    } else if (key === "coursesCount") {
       value = Number.isFinite(Number(raw)) ? Number(raw) : 0;
     } else {
       value = String(raw ?? "");
@@ -71,4 +80,16 @@ export function getModalFields(editing: boolean): FormField[] {
     : PRACTITIONER_FORM_FIELDS.filter((f) =>
         PRACTITIONER_CREATE_KEYS.includes(f.key as (typeof PRACTITIONER_CREATE_KEYS)[number])
       );
+}
+
+export function toPractitionerFormValues(
+  item: Record<string, unknown>
+): Record<string, unknown> {
+  const form: Record<string, unknown> = { ...item };
+
+  if (form.sortOrder != null && form.sortOrder !== "") {
+    form.sortOrder = String(form.sortOrder);
+  }
+
+  return form;
 }

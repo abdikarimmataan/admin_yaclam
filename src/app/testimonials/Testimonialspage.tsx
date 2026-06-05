@@ -8,7 +8,8 @@ import { TestimonialModal } from "@/app/testimonials/components/TestimonialModal
 import { TestimonialTable } from "@/app/testimonials/components/TestimonialTable";
 import {
   TESTIMONIAL_FORM_FIELDS,
-  getNextSortOrder,
+  getDuplicateSortOrders,
+  getNextTestimonialSortOrderSuggestion,
   sortTestimonialsByLatestSaved,
   type TestimonialRecord,
 } from "@/app/testimonials/model/testimonial.model";
@@ -22,6 +23,7 @@ import {
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { pickFormValues } from "@/app/frontend/CMS/lib/cms-utils";
 import { confirmVisibilityChange, showError } from "@/shared/utils/sweetalert";
+import { toast } from "@/shared/utils/toast";
 
 const testimonialKeys = TESTIMONIAL_FORM_FIELDS.map((f) => f.key);
 
@@ -32,7 +34,6 @@ export function Testimonialspage() {
   const debouncedSearch = useDebounce(search, 300);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [listError, setListError] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<TestimonialRecord | null>(null);
@@ -43,12 +44,11 @@ export function Testimonialspage() {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    setListError("");
     try {
       const res = await testimonialApi.getAll({ page: 1, pageSize: 500 });
       setItems(sortTestimonialsByLatestSaved((res.data ?? []) as TestimonialRecord[]));
     } catch (err) {
-      setListError((err as ApiError).message || "Failed to load testimonials");
+      toast.error((err as ApiError).message || "Failed to load testimonials");
       setItems([]);
     } finally {
       setLoading(false);
@@ -58,6 +58,8 @@ export function Testimonialspage() {
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
+
+  const duplicateSortOrders = useMemo(() => getDuplicateSortOrders(items), [items]);
 
   const filtered = useMemo(() => {
     if (!debouncedSearch) return items;
@@ -81,7 +83,7 @@ export function Testimonialspage() {
   const openCreate = () => {
     setEditing(null);
     const initial = pickFormValues(null, testimonialKeys);
-    initial.sortOrder = getNextSortOrder(items);
+    initial.sortOrder = getNextTestimonialSortOrderSuggestion(items);
     setForm(initial);
     setFormErrors({});
     setShowModal(true);
@@ -114,6 +116,7 @@ export function Testimonialspage() {
     const errors = validateTestimonialForm(form, Boolean(editing));
     if (Object.keys(errors).length) {
       setFormErrors(errors);
+      toast.error("Please fix the highlighted fields");
       return;
     }
 
@@ -125,11 +128,13 @@ export function Testimonialspage() {
       } else {
         await testimonialApi.create(payload);
       }
+      toast.success(editing ? "Updated successfully" : "Created successfully");
       closeModal();
       setPage(1);
       await fetchItems();
     } catch (err) {
-      setFormErrors({ _form: (err as ApiError).message });
+      toast.error((err as ApiError).message);
+      setFormErrors({});
     } finally {
       setSubmitting(false);
     }
@@ -171,15 +176,10 @@ export function Testimonialspage() {
         </button>
       </div>
 
-      {listError && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-          {listError}
-        </div>
-      )}
-
       <TestimonialTable
         loading={loading}
         paginated={paginated}
+        duplicateSortOrders={duplicateSortOrders}
         startIdx={startIdx}
         search={search}
         page={page}

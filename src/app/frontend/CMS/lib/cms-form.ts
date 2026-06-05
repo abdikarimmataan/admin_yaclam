@@ -8,6 +8,10 @@ import {
 import { normalizeStatsItems, statsItemsToPayload, type StatItem } from "@/app/frontend/CMS/lib/stats-list";
 import type { CmsRecord } from "@/config/api";
 
+function isCardNumberVisibleKey(key: string) {
+  return key.endsWith(".cardNumberVisible");
+}
+
 export function parseBoolText(input: string, fallback = true) {
   if (!input.trim()) return fallback;
   return !["false", "0", "no", "off"].includes(input.trim().toLowerCase());
@@ -91,6 +95,9 @@ function sanitizeFieldValue(value: unknown, field: FormField): unknown {
   }
   if (value == null) return "";
   if (typeof value === "object") return "";
+  if (isCardNumberVisibleKey(field.key)) {
+    return value === "" ? "" : String(value);
+  }
   return String(value);
 }
 
@@ -147,6 +154,16 @@ export function buildFormPayload(
   fields.forEach((f) => {
     if (f.required && !String(form[f.key] ?? "").trim() && f.type !== "boolean") {
       errors[f.key] = `${f.label} is required`;
+    }
+    if (isCardNumberVisibleKey(f.key)) {
+      const raw = String(form[f.key] ?? "").trim();
+      if (!raw) {
+        errors[f.key] = `${f.label} is required`;
+      } else if (!/^\d+$/.test(raw)) {
+        errors[f.key] = `${f.label} must be a whole number`;
+      } else if (Number(raw) < 0) {
+        errors[f.key] = `${f.label} must be 0 or greater`;
+      }
     }
     if (
       (f.type === "linkList" ||
@@ -223,6 +240,8 @@ export function buildFormPayload(
             isVisible: parseBoolText(visible, true),
           };
         });
+    } else if (isCardNumberVisibleKey(f.key)) {
+      value = Number.parseInt(String(raw ?? "").trim(), 10);
     } else if (f.type === "text" || f.type === "textarea" || f.type === "email") {
       value = String(raw ?? "");
     } else if (f.type === "boolean") {

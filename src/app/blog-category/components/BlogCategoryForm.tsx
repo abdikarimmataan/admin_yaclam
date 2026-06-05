@@ -94,9 +94,6 @@ function BlogCategoryInput({
 export function BlogCategoryForm({ fields, form, formErrors, onChange }: BlogCategoryFormProps) {
   return (
     <div className="space-y-4">
-      {formErrors._form && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{formErrors._form}</p>
-      )}
       {fields.map((field) => (
         <BlogCategoryInput
           key={field.key}

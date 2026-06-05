@@ -8,6 +8,8 @@ import { FieldModal } from "@/app/fields/components/FieldModal";
 import { FieldTable } from "@/app/fields/components/FieldTable";
 import {
   FIELD_FORM_FIELDS,
+  getDuplicateSortOrders,
+  getNextFieldSortOrderSuggestion,
   type FieldRecord,
 } from "@/app/fields/model/field.model";
 import { fieldApi } from "@/app/fields/service/field.service";
@@ -19,6 +21,7 @@ import {
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { pickFormValues } from "@/app/frontend/CMS/lib/cms-utils";
 import { confirmVisibilityChange, showError } from "@/shared/utils/sweetalert";
+import { toast } from "@/shared/utils/toast";
 
 const fieldKeys = FIELD_FORM_FIELDS.map((f) => f.key);
 
@@ -29,7 +32,6 @@ export function Fieldpage() {
   const debouncedSearch = useDebounce(search, 300);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [listError, setListError] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<FieldRecord | null>(null);
@@ -40,12 +42,11 @@ export function Fieldpage() {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    setListError("");
     try {
       const res = await fieldApi.getAll({ page: 1, pageSize: 500 });
       setItems((res.data ?? []) as FieldRecord[]);
     } catch (err) {
-      setListError((err as ApiError).message || "Failed to load fields");
+      toast.error((err as ApiError).message || "Failed to load fields");
       setItems([]);
     } finally {
       setLoading(false);
@@ -55,6 +56,8 @@ export function Fieldpage() {
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
+
+  const duplicateSortOrders = useMemo(() => getDuplicateSortOrders(items), [items]);
 
   const filtered = useMemo(() => {
     if (!debouncedSearch) return items;
@@ -78,7 +81,7 @@ export function Fieldpage() {
     setEditing(null);
     const initial = pickFormValues(null, fieldKeys);
     initial.isVisible = true;
-    initial.sortOrder = 0;
+    initial.sortOrder = getNextFieldSortOrderSuggestion(items);
     setForm(initial);
     setFormErrors({});
     setShowModal(true);
@@ -111,6 +114,7 @@ export function Fieldpage() {
     const errors = validateFieldForm(form, Boolean(editing));
     if (Object.keys(errors).length) {
       setFormErrors(errors);
+      toast.error("Please fix the highlighted fields");
       return;
     }
 
@@ -122,10 +126,12 @@ export function Fieldpage() {
       } else {
         await fieldApi.create(payload);
       }
+      toast.success(editing ? "Updated successfully" : "Created successfully");
       closeModal();
       await fetchItems();
     } catch (err) {
-      setFormErrors({ _form: (err as ApiError).message });
+      toast.error((err as ApiError).message);
+      setFormErrors({});
     } finally {
       setSubmitting(false);
     }
@@ -167,15 +173,10 @@ export function Fieldpage() {
         </button>
       </div>
 
-      {listError && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-          {listError}
-        </div>
-      )}
-
       <FieldTable
         loading={loading}
         paginated={paginated}
+        duplicateSortOrders={duplicateSortOrders}
         startIdx={startIdx}
         search={search}
         page={page}

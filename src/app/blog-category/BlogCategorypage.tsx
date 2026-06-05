@@ -21,6 +21,7 @@ import {
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { pickFormValues } from "@/app/frontend/CMS/lib/cms-utils";
 import { confirmVisibilityChange, showError } from "@/shared/utils/sweetalert";
+import { toast } from "@/shared/utils/toast";
 
 const categoryKeys = BLOG_CATEGORY_FORM_FIELDS.map((f) => f.key);
 
@@ -31,7 +32,6 @@ export function BlogCategorypage() {
   const debouncedSearch = useDebounce(search, 300);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [listError, setListError] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<BlogCategoryRecord | null>(null);
@@ -42,12 +42,11 @@ export function BlogCategorypage() {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    setListError("");
     try {
       const res = await blogCategoryApi.getAll({ page: 1, pageSize: 500 });
       setItems(sortBlogCategoriesByLatestSaved((res.data ?? []) as BlogCategoryRecord[]));
     } catch (err) {
-      setListError((err as ApiError).message || "Failed to load blog categories");
+      toast.error((err as ApiError).message || "Failed to load blog categories");
       setItems([]);
     } finally {
       setLoading(false);
@@ -113,6 +112,7 @@ export function BlogCategorypage() {
     const errors = validateBlogCategoryForm(form, Boolean(editing));
     if (Object.keys(errors).length) {
       setFormErrors(errors);
+      toast.error("Please fix the highlighted fields");
       return;
     }
 
@@ -124,11 +124,13 @@ export function BlogCategorypage() {
       } else {
         await blogCategoryApi.create(payload);
       }
+      toast.success(editing ? "Updated successfully" : "Created successfully");
       closeModal();
       setPage(1);
       await fetchItems();
     } catch (err) {
-      setFormErrors({ _form: (err as ApiError).message });
+      toast.error((err as ApiError).message);
+      setFormErrors({});
     } finally {
       setSubmitting(false);
     }
@@ -169,12 +171,6 @@ export function BlogCategorypage() {
           <Plus className="h-4 w-4" />
         </button>
       </div>
-
-      {listError && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-          {listError}
-        </div>
-      )}
 
       <BlogCategoryTable
         loading={loading}

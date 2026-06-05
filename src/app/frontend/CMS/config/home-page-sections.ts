@@ -58,6 +58,7 @@ export const HOME_SECTIONS_PANELS: HomeFormPanel[] = [
     fieldKeys: [
       "fieldSection.eyebrow",
       "fieldSection.title",
+      "fieldSection.cardNumberVisible",
       "fieldSection.subtitle",
       "fieldSection.isVisible",
     ],
@@ -68,6 +69,7 @@ export const HOME_SECTIONS_PANELS: HomeFormPanel[] = [
     fieldKeys: [
       "featuredCoursesSection.eyebrow",
       "featuredCoursesSection.title",
+      "featuredCoursesSection.cardNumberVisible",
       "featuredCoursesSection.subtitle",
       "featuredCoursesSection.isVisible",
       "featuredCoursesSection.viewAllButton.text",
@@ -81,6 +83,7 @@ export const HOME_SECTIONS_PANELS: HomeFormPanel[] = [
     fieldKeys: [
       "whyYaclamSection.eyebrow",
       "whyYaclamSection.title",
+      "whyYaclamSection.cardNumberVisible",
       "whyYaclamSection.subtitle",
       "whyYaclamSection.isVisible",
     ],
@@ -91,6 +94,7 @@ export const HOME_SECTIONS_PANELS: HomeFormPanel[] = [
     fieldKeys: [
       "roadmapsSection.eyebrow",
       "roadmapsSection.title",
+      "roadmapsSection.cardNumberVisible",
       "roadmapsSection.subtitle",
       "roadmapsSection.isVisible",
       "roadmapsSection.allRoadmapsButton.text",
@@ -104,6 +108,7 @@ export const HOME_SECTIONS_PANELS: HomeFormPanel[] = [
     fieldKeys: [
       "scholarshipsSection.eyebrow",
       "scholarshipsSection.title",
+      "scholarshipsSection.cardNumberVisible",
       "scholarshipsSection.subtitle",
       "scholarshipsSection.isVisible",
       "scholarshipsSection.browseAllButton.text",
@@ -117,6 +122,7 @@ export const HOME_SECTIONS_PANELS: HomeFormPanel[] = [
     fieldKeys: [
       "practitionersSection.eyebrow",
       "practitionersSection.title",
+      "practitionersSection.cardNumberVisible",
       "practitionersSection.subtitle",
       "practitionersSection.isVisible",
     ],
@@ -127,6 +133,7 @@ export const HOME_SECTIONS_PANELS: HomeFormPanel[] = [
     fieldKeys: [
       "testimonialsSection.eyebrow",
       "testimonialsSection.title",
+      "testimonialsSection.cardNumberVisible",
       "testimonialsSection.subtitle",
       "testimonialsSection.isVisible",
     ],

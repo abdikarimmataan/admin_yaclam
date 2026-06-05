@@ -17,5 +17,5 @@ export type FormField = {
   type: FieldType;
   required?: boolean;
   rowGroup?: string;
-  rowColumns?: 2 | 4;
+  rowColumns?: 2 | 3 | 4;
 };

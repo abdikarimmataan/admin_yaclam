@@ -1,10 +1,46 @@
 import type { FormField } from "@/app/frontend/CMS/config/cms-field-types";
-import { setValueByPath } from "@/app/frontend/CMS/lib/cms-utils";
+import { setValueByPath, getValueByPath } from "@/app/frontend/CMS/lib/cms-utils";
 import {
   ROADMAP_CREATE_KEYS,
   ROADMAP_DEMAND_LEVELS,
   ROADMAP_FORM_FIELDS,
 } from "@/app/roadmap/model/roadmap.model";
+
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function parseMonthToken(token: string): number | null {
+  const trimmed = token.trim();
+  if (!trimmed) return null;
+
+  const asNumber = Number(trimmed);
+  if (Number.isFinite(asNumber) && asNumber >= 1 && asNumber <= 12) {
+    return asNumber;
+  }
+
+  const short = trimmed.toLowerCase().slice(0, 3);
+  const index = MONTH_LABELS.findIndex((label) => label.toLowerCase() === short);
+  return index >= 0 ? index + 1 : null;
+}
+
+function parseTimeToJobReadyParts(value: unknown): { year: number; month: number; day: number } | null {
+  const trimmed = String(value ?? "").trim();
+  if (!trimmed) return null;
+
+  const match = trimmed.match(/^(\d{4})[/-]([^/]+)[/-](\d{1,2})$/);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = parseMonthToken(match[2]);
+  const day = Number(match[3]);
+  if (!month) return null;
+
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null;
+  }
+
+  return { year, month, day };
+}
 
 function parseSkills(raw: unknown): string[] {
   if (Array.isArray(raw)) {
@@ -66,6 +102,29 @@ function normalizeDemand(value: unknown): string {
   return match ?? trimmed;
 }
 
+/** Backend stores YYYY/MM/DD — date input uses YYYY-MM-DD. */
+export function timeToJobReadyToDateInputValue(value: unknown): string {
+  const parts = parseTimeToJobReadyParts(value);
+  if (!parts) return "";
+
+  return `${String(parts.year).padStart(4, "0")}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
+}
+
+export function normalizeTimeToJobReadyForApi(value: unknown): string | null {
+  const trimmed = String(value ?? "").trim();
+  if (!trimmed) return "";
+
+  const parts = parseTimeToJobReadyParts(trimmed);
+  if (!parts) return null;
+
+  return `${String(parts.year).padStart(4, "0")}/${String(parts.month).padStart(2, "0")}/${String(parts.day).padStart(2, "0")}`;
+}
+
+function formFieldValue(form: Record<string, unknown>, key: string): unknown {
+  if (key in form) return form[key];
+  return getValueByPath(form, key);
+}
+
 export function validateRoadmapForm(
   form: Record<string, unknown>,
   editing: boolean
@@ -78,12 +137,13 @@ export function validateRoadmapForm(
       );
 
   activeFields.forEach((f) => {
-    if (f.required && !String(form[f.key] ?? "").trim() && f.type !== "boolean") {
+    if (!f.required || f.type === "boolean") return;
+    if (!String(formFieldValue(form, f.key) ?? "").trim()) {
       errors[f.key] = `${f.label} is required`;
     }
   });
 
-  if (Array.isArray(form.steps)) {
+  if (Array.isArray(form.steps) && form.steps.length > 0) {
     const incomplete = (form.steps as { title?: string; detail?: string }[]).find(
       (step) =>
         (String(step.title ?? "").trim() && !String(step.detail ?? "").trim()) ||
@@ -92,6 +152,16 @@ export function validateRoadmapForm(
     if (incomplete) {
       errors.steps = "Each step needs both a title and a description";
     }
+  }
+
+  const sortRaw = String(formFieldValue(form, "sortOrder") ?? "").trim();
+  if (sortRaw && !/^\d+$/.test(sortRaw)) {
+    errors.sortOrder = "Sort order must be a whole number";
+  }
+
+  const timeRaw = String(formFieldValue(form, "timeToJobReady") ?? "").trim();
+  if (timeRaw && normalizeTimeToJobReadyForApi(timeRaw) === null) {
+    errors.timeToJobReady = "Enter a valid date (e.g. 2026/Dec/20)";
   }
 
   return errors;
@@ -109,23 +179,24 @@ export function buildRoadmapPayload(
   keysToSave.forEach((key) => {
     const f = ROADMAP_FORM_FIELDS.find((ff) => ff.key === key);
     if (!f) return;
-    const raw = form[key];
+    const raw = formFieldValue(form, key);
     let value: unknown = raw;
     if (key === "skills") {
       value = parseSkills(raw);
     } else if (key === "demand") {
       value = normalizeDemand(raw);
-    } else if (key === "months" || key === "sortOrder") {
-      value = Number.isFinite(Number(raw)) ? Number(raw) : 0;
+    } else if (key === "sortOrder") {
+      value = Number.parseInt(String(raw ?? "").trim(), 10);
+    } else if (key === "timeToJobReady") {
+      const normalized = normalizeTimeToJobReadyForApi(raw);
+      value = normalized ?? "";
     } else if (key !== "steps") {
       value = String(raw ?? "");
     }
     setValueByPath(payload, key, value);
   });
 
-  if (form.steps !== undefined) {
-    payload.steps = parseSteps(form.steps);
-  }
+  payload.steps = parseSteps(form.steps);
 
   if (!editing) {
     payload.isVisible = true;
@@ -133,7 +204,12 @@ export function buildRoadmapPayload(
     payload.status = true;
     payload.skills = parseSkills(form.skills);
     payload.demand = normalizeDemand(form.demand);
-    if (!payload.steps) payload.steps = [];
+    payload.steps = parseSteps(form.steps);
+    payload.ctaButton = {
+      label: String(form["ctaButton.label"] ?? "").trim(),
+      url: String(form["ctaButton.url"] ?? "").trim(),
+      isVisible: true,
+    };
   }
 
   return payload;
@@ -175,5 +251,6 @@ export function toRoadmapFormValues(item: Record<string, unknown>): Record<strin
   } else {
     form.steps = [];
   }
+  form.timeToJobReady = timeToJobReadyToDateInputValue(form.timeToJobReady);
   return form;
 }

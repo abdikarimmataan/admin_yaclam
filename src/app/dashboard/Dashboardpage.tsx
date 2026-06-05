@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { getDashboardStats } from "@/app/dashboard/service/dashboard.service";
+import { toast } from "@/shared/utils/toast";
 import type { DashboardStat } from "@/app/users/model/user.model";
 
 const statConfig: Record<
@@ -45,7 +46,6 @@ export function Dashboardpage() {
     { label: "Total Admins", value: "0", color: "purple" },
   ]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     getDashboardStats()
@@ -62,7 +62,7 @@ export function Dashboardpage() {
         ]);
       })
       .catch((err) => {
-        setError(err?.message ?? "Failed to load dashboard");
+        toast.error(err?.message ?? "Failed to load dashboard");
       })
       .finally(() => setLoading(false));
   }, []);
@@ -95,12 +95,6 @@ export function Dashboardpage() {
           <span className="font-medium">Live Monitoring</span>
         </div>
       </div>
-
-      {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
-        </div>
-      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => {

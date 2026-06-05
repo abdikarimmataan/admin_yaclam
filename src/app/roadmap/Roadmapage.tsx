@@ -8,7 +8,8 @@ import { RoadmapModal } from "@/app/roadmap/components/RoadmapModal";
 import { RoadmapTable } from "@/app/roadmap/components/RoadmapTable";
 import {
   ROADMAP_FORM_FIELDS,
-  getNextSortOrder,
+  getDuplicateSortOrders,
+  getNextRoadmapSortOrderSuggestion,
   sortRoadmapsByLatestSaved,
   type RoadmapRecord,
 } from "@/app/roadmap/model/roadmap.model";
@@ -22,6 +23,7 @@ import {
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { pickFormValues } from "@/app/frontend/CMS/lib/cms-utils";
 import { confirmVisibilityChange, showError } from "@/shared/utils/sweetalert";
+import { toast } from "@/shared/utils/toast";
 
 const roadmapKeys = ROADMAP_FORM_FIELDS.map((f) => f.key);
 
@@ -32,7 +34,6 @@ export function Roadmapage() {
   const debouncedSearch = useDebounce(search, 300);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [listError, setListError] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<RoadmapRecord | null>(null);
@@ -43,12 +44,11 @@ export function Roadmapage() {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    setListError("");
     try {
       const res = await roadmapApi.getAll({ page: 1, pageSize: 500 });
       setItems(sortRoadmapsByLatestSaved((res.data ?? []) as RoadmapRecord[]));
     } catch (err) {
-      setListError((err as ApiError).message || "Failed to load roadmaps");
+      toast.error((err as ApiError).message || "Failed to load roadmaps");
       setItems([]);
     } finally {
       setLoading(false);
@@ -58,6 +58,8 @@ export function Roadmapage() {
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
+
+  const duplicateSortOrders = useMemo(() => getDuplicateSortOrders(items), [items]);
 
   const filtered = useMemo(() => {
     if (!debouncedSearch) return items;
@@ -81,10 +83,12 @@ export function Roadmapage() {
     setEditing(null);
     const initial = pickFormValues(null, roadmapKeys);
     initial.demand = "High";
-    initial.months = 0;
+    initial.timeToJobReady = "";
+    initial["ctaButton.label"] = "";
+    initial["ctaButton.url"] = "";
     initial.skills = [];
     initial.steps = [];
-    initial.sortOrder = getNextSortOrder(items);
+    initial.sortOrder = getNextRoadmapSortOrderSuggestion(items);
     setForm(initial);
     setFormErrors({});
     setShowModal(true);
@@ -117,6 +121,7 @@ export function Roadmapage() {
     const errors = validateRoadmapForm(form, Boolean(editing));
     if (Object.keys(errors).length) {
       setFormErrors(errors);
+      toast.error("Please fix the highlighted fields");
       return;
     }
 
@@ -128,11 +133,13 @@ export function Roadmapage() {
       } else {
         await roadmapApi.create(payload);
       }
+      toast.success(editing ? "Updated successfully" : "Created successfully");
       closeModal();
       setPage(1);
       await fetchItems();
     } catch (err) {
-      setFormErrors({ _form: (err as ApiError).message });
+      toast.error((err as ApiError).message);
+      setFormErrors({});
     } finally {
       setSubmitting(false);
     }
@@ -174,15 +181,10 @@ export function Roadmapage() {
         </button>
       </div>
 
-      {listError && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-          {listError}
-        </div>
-      )}
-
       <RoadmapTable
         loading={loading}
         paginated={paginated}
+        duplicateSortOrders={duplicateSortOrders}
         startIdx={startIdx}
         search={search}
         page={page}
