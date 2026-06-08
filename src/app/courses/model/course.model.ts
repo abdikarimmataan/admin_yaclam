@@ -24,6 +24,23 @@ export type CourseModule = {
   lessons?: CourseLesson[];
 };
 
+export type CourseResource = {
+  id?: string;
+  title?: string;
+  description?: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  mimeType?: string;
+  sortOrder?: number;
+  isVisible?: boolean;
+};
+
+/** UI row — may hold a local file before save uploads it via multipart. */
+export type CourseResourceFormRow = CourseResource & {
+  pendingFile?: File | null;
+};
+
 export type CourseRecord = {
   id?: string;
   title?: string;
@@ -75,63 +92,201 @@ export type CourseRecord = {
     avatar?: string;
   };
   curriculum?: CourseModule[];
+  resources?: CourseResource[];
   created_at?: string;
 };
 
 export const COURSE_API_PATH = "/course";
 
+const COURSE_LEVEL_OPTIONS = [
+  { value: "Beginner", label: "Beginner" },
+  { value: "Intermediate", label: "Intermediate" },
+  { value: "Advanced", label: "Advanced" },
+];
+
+const COURSE_LANGUAGE_OPTIONS = [
+  { value: "Somali", label: "Somali" },
+  { value: "English", label: "English" },
+  { value: "Arabic", label: "Arabic" },
+];
+
+const COURSE_ACCESS_OPTIONS = [
+  { value: "1 Year", label: "1 Year" },
+  { value: "Lifetime", label: "Lifetime" },
+  { value: "6 Months", label: "6 Months" },
+];
+
+const COURSE_BUTTON_STYLE_OPTIONS = [
+  { value: "primary", label: "Primary" },
+  { value: "secondary", label: "Secondary" },
+  { value: "outline", label: "Outline" },
+];
+
 export const COURSE_FORM_FIELDS: FormField[] = [
-  { key: "title", label: "Title", type: "text", required: true },
+  {
+    key: "title",
+    label: "Title",
+    type: "text",
+    required: true,
+    placeholder: "e.g. Introduction to Web Development",
+  },
   { key: "fieldId", label: "Field", type: "text", required: true },
-  { key: "shortDescription", label: "Short Description", type: "textarea" },
-  { key: "description", label: "Description", type: "textarea" },
-  { key: "category", label: "Category", type: "text" },
-  { key: "level", label: "Level", type: "text" },
-  { key: "language", label: "Language", type: "text" },
-  { key: "duration", label: "Duration", type: "text" },
-  { key: "color", label: "Color", type: "text" },
-  { key: "badge", label: "Badge", type: "text" },
+  {
+    key: "shortDescription",
+    label: "Short Description",
+    type: "textarea",
+    placeholder: "e.g. Learn HTML, CSS, and JavaScript from scratch in Somali.",
+  },
+  {
+    key: "description",
+    label: "Description",
+    type: "textarea",
+    placeholder: "e.g. A complete beginner-friendly course covering projects, quizzes, and a certificate.",
+  },
+  {
+    key: "level",
+    label: "Level",
+    type: "select",
+    options: COURSE_LEVEL_OPTIONS,
+    placeholder: "e.g. Beginner",
+  },
+  {
+    key: "language",
+    label: "Language",
+    type: "select",
+    options: COURSE_LANGUAGE_OPTIONS,
+    placeholder: "e.g. Somali",
+  },
+  {
+    key: "duration",
+    label: "Duration",
+    type: "text",
+    placeholder: "e.g. 8 weeks",
+  },
+  {
+    key: "color",
+    label: "Color",
+    type: "text",
+    placeholder: "e.g. #1F3A93",
+  },
+  {
+    key: "badge",
+    label: "Badge",
+    type: "text",
+    placeholder: "e.g. Bestseller",
+  },
   { key: "certificate", label: "Certificate", type: "boolean" },
-  { key: "access", label: "Access", type: "text" },
-  { key: "instructorName", label: "Instructor Name", type: "text" },
-  { key: "instructor.instructorId", label: "Instructor ID", type: "text" },
-  { key: "instructor.name", label: "Instructor (nested)", type: "text" },
-  { key: "instructor.role", label: "Instructor Role", type: "text" },
-  { key: "instructor.bio", label: "Instructor Bio", type: "textarea" },
-  { key: "instructor.avatar", label: "Instructor Avatar URL", type: "text" },
-  { key: "overview.headline", label: "Overview Headline", type: "text" },
-  { key: "overview.description", label: "Overview Description", type: "textarea" },
+  {
+    key: "access",
+    label: "Access",
+    type: "select",
+    options: COURSE_ACCESS_OPTIONS,
+    placeholder: "e.g. 1 Year",
+  },
+  {
+    key: "overview.headline",
+    label: "Overview Headline",
+    type: "text",
+    placeholder: "e.g. Build smarter, not harder",
+  },
+  {
+    key: "overview.description",
+    label: "Overview Description",
+    type: "textarea",
+    placeholder: "e.g. Master the fundamentals step by step with hands-on lessons.",
+  },
   {
     key: "overview.outcomes",
     label: "Learning Outcomes (comma separated)",
     type: "stringList",
+    placeholder: "e.g. Build a portfolio, Deploy a website, Earn a certificate",
   },
-  { key: "details.skillLevel", label: "Skill Level", type: "text" },
-  { key: "details.language", label: "Details Language", type: "text" },
-  { key: "details.durationHours", label: "Details Duration Hours", type: "number" },
-  { key: "details.lessonCount", label: "Details Lesson Count", type: "number" },
-  { key: "details.certificate", label: "Details Certificate", type: "boolean" },
-  { key: "details.access", label: "Details Access", type: "text" },
-  { key: "price", label: "Price", type: "number" },
-  { key: "originalPrice", label: "Original Price", type: "number" },
+  {
+    key: "price",
+    label: "Price",
+    type: "number",
+    placeholder: "e.g. 49",
+  },
+  {
+    key: "originalPrice",
+    label: "Original Price",
+    type: "number",
+    placeholder: "e.g. 99",
+  },
   { key: "isFree", label: "Free", type: "boolean" },
   { key: "isFeatured", label: "Featured", type: "boolean" },
   { key: "isPublished", label: "Published", type: "boolean" },
   { key: "isVisible", label: "Visible", type: "boolean" },
   { key: "status", label: "Status", type: "boolean" },
-  { key: "durationHours", label: "Duration Hours", type: "number" },
-  { key: "lessonCount", label: "Lesson Count", type: "number" },
-  { key: "rating", label: "Rating", type: "number" },
-  { key: "reviewCount", label: "Review Count", type: "number" },
-  { key: "studentCount", label: "Student Count", type: "number" },
-  { key: "sortOrder", label: "Sort Order", type: "number" },
-  { key: "badges.premium.text", label: "Premium Badge Text", type: "text" },
+  {
+    key: "durationHours",
+    label: "Duration Hours",
+    type: "number",
+    placeholder: "e.g. 12",
+  },
+  {
+    key: "lessonCount",
+    label: "Lesson Count",
+    type: "number",
+    placeholder: "e.g. 24",
+  },
+  {
+    key: "rating",
+    label: "Rating",
+    type: "number",
+    placeholder: "e.g. 4.8",
+  },
+  {
+    key: "reviewCount",
+    label: "Review Count",
+    type: "number",
+    placeholder: "e.g. 128",
+  },
+  {
+    key: "studentCount",
+    label: "Student Count",
+    type: "number",
+    placeholder: "e.g. 1500",
+  },
+  {
+    key: "sortOrder",
+    label: "Sort Order",
+    type: "number",
+    placeholder: "e.g. 1",
+  },
+  {
+    key: "badges.premium.text",
+    label: "Premium Badge Text",
+    type: "text",
+    placeholder: "e.g. Premium",
+  },
   { key: "badges.premium.isVisible", label: "Premium Badge Visible", type: "boolean" },
-  { key: "badges.free.text", label: "Free Badge Text", type: "text" },
+  {
+    key: "badges.free.text",
+    label: "Free Badge Text",
+    type: "text",
+    placeholder: "e.g. Free",
+  },
   { key: "badges.free.isVisible", label: "Free Badge Visible", type: "boolean" },
-  { key: "ctaButton.label", label: "CTA Button Label", type: "text" },
-  { key: "ctaButton.url", label: "CTA Button URL", type: "text" },
-  { key: "ctaButton.style", label: "CTA Button Style", type: "text" },
+  {
+    key: "ctaButton.label",
+    label: "CTA Button Label",
+    type: "text",
+    placeholder: "e.g. Enroll now",
+  },
+  {
+    key: "ctaButton.url",
+    label: "CTA Button URL",
+    type: "text",
+    placeholder: "e.g. /courses/intro-web-dev",
+  },
+  {
+    key: "ctaButton.style",
+    label: "CTA Button Style",
+    type: "select",
+    options: COURSE_BUTTON_STYLE_OPTIONS,
+    placeholder: "e.g. Primary",
+  },
   { key: "ctaButton.isVisible", label: "CTA Button Visible", type: "boolean" },
   { key: "wishlistButton.isVisible", label: "Wishlist Visible", type: "boolean" },
 ];
@@ -190,3 +345,24 @@ export function emptyCurriculumLesson(
     isVisible: true,
   };
 }
+
+export function emptyCourseResource(index: number, courseId = "course"): CourseResourceFormRow {
+  const prefix = String(courseId).trim() || "course";
+  return {
+    id: `${prefix}-r${index + 1}`,
+    title: "",
+    description: "",
+    fileUrl: "",
+    fileName: "",
+    fileSize: 0,
+    mimeType: "",
+    sortOrder: index,
+    isVisible: true,
+    pendingFile: null,
+  };
+}
+
+export const RESOURCE_FILE_ACCEPT =
+  ".pdf,.zip,.rar,.7z,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf";
+
+export const RESOURCE_MAX_SIZE_MB = 100;

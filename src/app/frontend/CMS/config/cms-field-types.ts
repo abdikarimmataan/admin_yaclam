@@ -4,12 +4,19 @@ export type FieldType =
   | "number"
   | "boolean"
   | "email"
+  | "icon"
+  | "select"
   | "stringList"
   | "statsList"
   | "linkList"
   | "paymentList"
   | "stepsList"
   | "footerColumnsList";
+
+export type SelectOption = {
+  value: string;
+  label: string;
+};
 
 export type FormField = {
   key: string;
@@ -18,4 +25,6 @@ export type FormField = {
   required?: boolean;
   rowGroup?: string;
   rowColumns?: 2 | 3 | 4;
+  options?: SelectOption[];
+  placeholder?: string;
 };

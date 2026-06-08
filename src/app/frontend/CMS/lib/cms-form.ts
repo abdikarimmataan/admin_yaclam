@@ -242,7 +242,7 @@ export function buildFormPayload(
         });
     } else if (isCardNumberVisibleKey(f.key)) {
       value = Number.parseInt(String(raw ?? "").trim(), 10);
-    } else if (f.type === "text" || f.type === "textarea" || f.type === "email") {
+    } else if (f.type === "text" || f.type === "textarea" || f.type === "email" || f.type === "icon" || f.type === "select") {
       value = String(raw ?? "");
     } else if (f.type === "boolean") {
       value = !!raw;

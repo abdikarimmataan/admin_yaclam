@@ -92,8 +92,9 @@ async function request<T>(endpoint: string, options?: RequestOpts): Promise<T> {
       ) {
         store.clearAuth();
         const path = window.location.pathname;
-        if (!path.startsWith("/login")) {
-          window.location.href = `/login?redirect=${encodeURIComponent(path)}`;
+        const loginPath = path.startsWith("/instructor") ? "/instructor/login" : "/login";
+        if (!path.startsWith(loginPath)) {
+          window.location.href = `${loginPath}?redirect=${encodeURIComponent(path)}`;
         }
       }
 

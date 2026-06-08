@@ -9,7 +9,9 @@ import {
   COURSE_API_PATH,
   type CourseModule,
   type CourseRecord,
+  type CourseResource,
 } from "@/app/courses/model/course.model";
+import type { ResourcesSavePayload } from "@/app/courses/validation/resources.validation";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9000/api";
@@ -17,6 +19,8 @@ const API_BASE_URL =
 const JSON_BODY_KEYS = new Set([
   "overview",
   "curriculum",
+  "resources",
+  "resourceFileIndexes",
   "details",
   "instructor",
   "badges",
@@ -266,6 +270,29 @@ export const courseApi = {
       .patch<CourseRecord, { curriculum: CourseModule[] }>(
         `${COURSE_API_PATH}/update/${courseId}`,
         { curriculum }
+      )
+      .then((row) => normalizeCmsRecord(row) as CourseRecord);
+  },
+
+  saveResources(courseId: string, payload: ResourcesSavePayload) {
+    const { resources, resourceFileIndexes, files } = payload;
+    if (files.length > 0) {
+      const fd = new FormData();
+      fd.append("resources", JSON.stringify(resources));
+      fd.append("resourceFileIndexes", JSON.stringify(resourceFileIndexes));
+      files.forEach((file) => fd.append("resourceFiles", file));
+
+      return fetch(`${API_BASE_URL}${COURSE_API_PATH}/update/${courseId}`, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: fd,
+      }).then(parseCourseResponse);
+    }
+
+    return api
+      .patch<CourseRecord, { resources: CourseResource[] }>(
+        `${COURSE_API_PATH}/update/${courseId}`,
+        { resources }
       )
       .then((row) => normalizeCmsRecord(row) as CourseRecord);
   },

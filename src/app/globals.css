@@ -16,6 +16,12 @@ body {
   line-height: 1.45;
 }
 
+html.admin-shell-lock,
+body.admin-shell-lock {
+  height: 100%;
+  overflow: hidden;
+}
+
 @keyframes slideIn {
   from {
     transform: translateX(100%);

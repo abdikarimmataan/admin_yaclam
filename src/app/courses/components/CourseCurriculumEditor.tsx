@@ -100,17 +100,8 @@ export function CourseCurriculumEditor({
       </div>
 
       <section className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 sm:p-5">
-        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-4">
           <h2 className="text-base font-bold text-gray-900">Course curriculum</h2>
-          {hadCurriculum ? (
-            <span className="text-xs font-medium text-green-700">
-              Curriculum exists — updates on save
-            </span>
-          ) : (
-            <span className="text-xs font-medium text-amber-700">
-              No curriculum yet — creates on save
-            </span>
-          )}
         </div>
 
         {loading ? (

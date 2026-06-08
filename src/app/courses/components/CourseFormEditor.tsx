@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Loader2, Trash2 } from "lucide-react";
 import type { ApiError } from "@/config/api";
 import { CollapsibleFormPanel } from "@/app/frontend/CMS/components/CollapsibleFormPanel";
+import { CourseInstructorPanel } from "@/app/courses/components/CourseInstructorPanel";
 import { CourseMediaPanel } from "@/app/courses/components/CourseMediaPanel";
 import {
   COURSE_FORM_PANELS,
@@ -18,6 +19,15 @@ import {
   courseRecordToForm,
 } from "@/app/courses/validation/course.validation";
 import type { FieldOption } from "@/app/courses/components/CourseMediaPanel";
+import type { InstructorRecord } from "@/app/instructors/model/instructor.model";
+import {
+  getInstructorLabel,
+  getInstructorRecordId,
+  getInstructorRoleName,
+} from "@/app/instructors/model/instructor.model";
+import { instructorApi } from "@/app/instructors/service/instructor.service";
+import { resolveAssetUrl } from "@/shared/utils/asset-url";
+import type { Select2Option } from "@/shared/components/Select2";
 import { confirmDelete, showError } from "@/shared/utils/sweetalert";
 import { toast } from "@/shared/utils/toast";
 
@@ -42,6 +52,8 @@ export function CourseFormEditor({
   const [selectedFieldId, setSelectedFieldId] = useState("");
   const [uploadFiles, setUploadFiles] = useState<CourseUploadFiles>({});
   const [loading, setLoading] = useState(Boolean(recordId));
+  const [loadingInstructors, setLoadingInstructors] = useState(true);
+  const [instructors, setInstructors] = useState<InstructorRecord[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -73,6 +85,48 @@ export function CourseFormEditor({
   useEffect(() => {
     load();
   }, [load]);
+
+  const fetchInstructors = useCallback(async () => {
+    setLoadingInstructors(true);
+    try {
+      const res = await instructorApi.getAll({ page: 1, pageSize: 500 });
+      setInstructors((res.data ?? []) as InstructorRecord[]);
+    } catch (err) {
+      toast.error((err as ApiError).message || "Failed to load instructors");
+      setInstructors([]);
+    } finally {
+      setLoadingInstructors(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchInstructors();
+  }, [fetchInstructors]);
+
+  const instructorOptions: Select2Option[] = useMemo(
+    () =>
+      instructors
+        .map((item) => ({
+          id: getInstructorRecordId(item),
+          text: getInstructorLabel(item),
+          imageUrl: resolveAssetUrl(String(item.photo ?? "")) || undefined,
+        }))
+        .filter((item) => item.id),
+    [instructors]
+  );
+
+  const selectedInstructorId = String(form["instructor.instructorId"] ?? "").trim();
+
+  const applyInstructorSelection = (instructorId: string) => {
+    const selected =
+      instructors.find((item) => getInstructorRecordId(item) === instructorId) ?? null;
+
+    patchForm("instructor.instructorId", instructorId);
+    patchForm("instructor.name", selected?.name ?? "");
+    patchForm("instructor.role", selected ? getInstructorRoleName(selected) : "");
+    patchForm("instructor.bio", selected?.bio ?? "");
+    patchForm("instructor.avatar", selected?.photo ?? "");
+  };
 
   const patchForm = (key: string, value: unknown) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -182,17 +236,8 @@ export function CourseFormEditor({
       </div>
 
       <section className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 sm:p-5">
-        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-4">
           <h2 className="text-base font-bold text-gray-900">Course form</h2>
-          {activeRecordId ? (
-            <span className="text-xs font-medium text-green-700">
-              Record exists — PATCH /course/update/:id on save
-            </span>
-          ) : (
-            <span className="text-xs font-medium text-amber-700">
-              New course — POST /course/create on save
-            </span>
-          )}
         </div>
 
         {loading ? (
@@ -232,7 +277,17 @@ export function CourseFormEditor({
                   errors={errors}
                   onChange={patchForm}
                   defaultOpen={i === 0}
-                />
+                >
+                  {panel.id === "instructor" ? (
+                    <CourseInstructorPanel
+                      instructorId={selectedInstructorId}
+                      instructorOptions={instructorOptions}
+                      instructors={instructors}
+                      loading={loadingInstructors}
+                      onInstructorChange={applyInstructorSelection}
+                    />
+                  ) : null}
+                </CollapsibleFormPanel>
               ))}
             </div>
 

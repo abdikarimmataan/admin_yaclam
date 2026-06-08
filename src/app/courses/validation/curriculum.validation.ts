@@ -28,13 +28,5 @@ export function buildCurriculumPayload(curriculum: CourseModule[]): {
     return { payload: null, errors };
   }
 
-  const payload = sanitizeCurriculumForApi(curriculum);
-  if (!payload?.length) {
-    return {
-      payload: null,
-      errors: { _form: "Add at least one module." },
-    };
-  }
-
-  return { payload, errors: {} };
+  return { payload: sanitizeCurriculumForApi(curriculum), errors: {} };
 }

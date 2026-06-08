@@ -5,7 +5,9 @@ import { Plus } from "lucide-react";
 import "sweetalert2/dist/sweetalert2.min.css";
 import type { ApiError } from "@/config/api";
 import { CourseCurriculumEditor } from "@/app/courses/components/CourseCurriculumEditor";
+import { CourseResourcesEditor } from "@/app/courses/components/CourseResourcesEditor";
 import { CourseFormEditor } from "@/app/courses/components/CourseFormEditor";
+import { CoursePreviewModal } from "@/app/courses/components/CoursePreviewModal";
 import { CourseTable } from "@/app/courses/components/CourseTable";
 import type { CourseRecord } from "@/app/courses/model/course.model";
 import {
@@ -26,7 +28,7 @@ function getFieldRecordId(field: FieldRecord): string {
   return String(field.id ?? raw._id ?? "").trim();
 }
 
-type ViewMode = "list" | "form" | "curriculum";
+type ViewMode = "list" | "form" | "curriculum" | "resources";
 
 export function Coursepage() {
   const [view, setView] = useState<ViewMode>("list");
@@ -40,7 +42,12 @@ export function Coursepage() {
   const [recordId, setRecordId] = useState<string | null>(null);
   const [curriculumCourseId, setCurriculumCourseId] = useState<string | null>(null);
   const [curriculumCourseTitle, setCurriculumCourseTitle] = useState("");
+  const [resourcesCourseId, setResourcesCourseId] = useState<string | null>(null);
+  const [resourcesCourseTitle, setResourcesCourseTitle] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewRecord, setPreviewRecord] = useState<CourseRecord | null>(null);
 
   const fieldOptions: FieldOption[] = useMemo(
     () =>
@@ -48,6 +55,7 @@ export function Coursepage() {
         .map((f) => ({
           id: getFieldRecordId(f),
           text: getFieldLabel(f),
+          icon: String(f.icon ?? "").trim() || undefined,
         }))
         .filter((f) => f.id),
     [fields]
@@ -114,15 +122,49 @@ export function Coursepage() {
     setView("curriculum");
   };
 
+  const openResources = (item: CourseRecord) => {
+    if (!item.id) return;
+    setResourcesCourseId(String(item.id));
+    setResourcesCourseTitle(getCourseLabel(item));
+    setView("resources");
+  };
+
+  const openShow = async (item: CourseRecord) => {
+    if (!item.id) return;
+    setPreviewOpen(true);
+    setPreviewLoading(true);
+    setPreviewRecord(null);
+    setBusyId(String(item.id));
+    try {
+      const record = await courseApi.getById(String(item.id));
+      setPreviewRecord(record);
+    } catch (err) {
+      toast.error((err as ApiError).message || "Failed to load course preview");
+      setPreviewOpen(false);
+    } finally {
+      setPreviewLoading(false);
+      setBusyId(null);
+    }
+  };
+
+  const closePreview = () => {
+    setPreviewOpen(false);
+    setPreviewRecord(null);
+    setPreviewLoading(false);
+  };
+
   const backToList = () => {
     setView("list");
     setRecordId(null);
     setCurriculumCourseId(null);
     setCurriculumCourseTitle("");
+    setResourcesCourseId(null);
+    setResourcesCourseTitle("");
   };
 
   const handleSaved = async () => {
     await fetchData();
+    backToList();
   };
 
   const handleToggleVisible = async (item: CourseRecord) => {
@@ -166,6 +208,17 @@ export function Coursepage() {
     );
   }
 
+  if (view === "resources" && resourcesCourseId) {
+    return (
+      <CourseResourcesEditor
+        courseId={resourcesCourseId}
+        courseTitle={resourcesCourseTitle}
+        onBack={backToList}
+        onSaved={handleSaved}
+      />
+    );
+  }
+
   return (
     <div>
       <div className="mb-4">
@@ -203,8 +256,17 @@ export function Coursepage() {
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
         onEdit={openEdit}
+        onShow={openShow}
         onCurriculum={openCurriculum}
+        onResources={openResources}
         onToggleVisible={handleToggleVisible}
+      />
+
+      <CoursePreviewModal
+        open={previewOpen}
+        loading={previewLoading}
+        record={previewRecord}
+        onClose={closePreview}
       />
     </div>
   );
