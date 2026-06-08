@@ -12,7 +12,7 @@ export function ContactCmsEditor() {
   return (
     <SingletonCmsFormEditor
       pageTitle="Contact Us CMS"
-      blockTitle="Contact page content"
+      blockTitle="Contact page sections"
       apiPath={CONTACT_CMS_API_PATH}
       fields={ALL_CONTACT_CMS_FIELDS}
       panels={CONTACT_CMS_PANELS}

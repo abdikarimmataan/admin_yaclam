@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Map,
   MessageSquare,
+  Presentation,
   Sparkles,
   UserCircle,
   UserCog,
@@ -38,6 +39,14 @@ export const NAVIGATION: NavGroup[] = [
       },
       { href: "/users", label: "Students", icon: Users },
       { href: "/admins", label: "Admins", icon: UserCog },
+      {
+        label: "Instructor",
+        icon: Presentation,
+        children: [
+          { href: "/instructor-roles", label: "Role" },
+          { href: "/instructors", label: "Manage" },
+        ],
+      },
       { href: "/fields", label: "Fields", icon: Layers },
       { href: "/courses", label: "Courses", icon: BookOpen },
       { href: "/yaclam", label: "Yaclam", icon: Sparkles },

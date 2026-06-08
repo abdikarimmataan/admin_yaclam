@@ -95,6 +95,8 @@ export const BLOG_CMS_MODULE: CmsModuleConfig = {
   formFields: PAGE_CMS_FORM_FIELDS,
 };
 
+import { ABOUT_CMS_FORM_FIELDS } from "@/app/frontend/CMS/config/about-cms-fields";
+
 export const ABOUT_CMS_MODULE: CmsModuleConfig = {
   slug: "about-cms",
   apiPath: "/about_cms",
@@ -102,8 +104,10 @@ export const ABOUT_CMS_MODULE: CmsModuleConfig = {
   group: "frontend",
   icon: FileText,
   singleRecord: true,
-  formFields: PAGE_CMS_FORM_FIELDS,
+  formFields: ABOUT_CMS_FORM_FIELDS,
 };
+
+import { CONTACT_CMS_FORM_FIELDS } from "@/app/frontend/CMS/config/contact-cms-fields";
 
 export const CONTACT_CMS_MODULE: CmsModuleConfig = {
   slug: "contact-cms",
@@ -112,7 +116,7 @@ export const CONTACT_CMS_MODULE: CmsModuleConfig = {
   group: "frontend",
   icon: Mail,
   singleRecord: true,
-  formFields: PAGE_CMS_FORM_FIELDS,
+  formFields: CONTACT_CMS_FORM_FIELDS,
 };
 
 /** Home page sections (single document) */
@@ -225,7 +229,7 @@ export const CMS_MODULES: CmsModuleConfig[] = [
     statusField: "isVisible",
     formFields: [
       { key: "name", label: "Name", type: "text", required: true },
-      { key: "icon", label: "Icon", type: "text", required: true },
+      { key: "icon", label: "Icon", type: "icon", required: true },
       { key: "description", label: "Description", type: "textarea" },
       { key: "isVisible", label: "Visible", type: "boolean" },
     ],
@@ -238,7 +242,7 @@ export const CMS_MODULES: CmsModuleConfig[] = [
     icon: Sparkles,
     hasStatus: false,
     formFields: [
-      { key: "icon", label: "Icon", type: "text" },
+      { key: "icon", label: "Icon", type: "icon" },
       { key: "title", label: "Title", type: "text", required: true },
       { key: "description", label: "Description", type: "textarea", required: true },
       { key: "sortOrder", label: "Sort Order", type: "number" },
@@ -333,7 +337,7 @@ export const CMS_MODULES: CmsModuleConfig[] = [
       { key: "title", label: "Title", type: "text", required: true },
       { key: "slug", label: "Slug", type: "text", required: true },
       { key: "description", label: "Description", type: "textarea" },
-      { key: "icon", label: "Icon", type: "text" },
+      { key: "icon", label: "Icon", type: "icon" },
       { key: "skills", label: "Skills (comma separated)", type: "stringList" },
       { key: "steps", label: "Steps", type: "stepsList" },
       { key: "ctaButton.label", label: "CTA Button Label", type: "text" },

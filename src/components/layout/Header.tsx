@@ -20,7 +20,7 @@ export function Header() {
   }, []);
 
   return (
-    <header className="flex h-12 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm sm:px-5">
+    <header className="flex h-12 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm sm:px-5">
       <div className="max-w-sm flex-1">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />

@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo } from "react";
 import { resolveUploadUrl } from "@/app/courses/model/course.model";
+import { FileUploadDropzone } from "@/shared/components/FileUploadDropzone";
+import { Select2, type Select2Option } from "@/shared/components/Select2";
 
-export type FieldOption = { id: string; text: string };
+export type FieldOption = Select2Option;
 
 type CourseMediaPanelProps = {
   fieldId: string;
@@ -17,9 +19,6 @@ type CourseMediaPanelProps = {
   onVideoFileChange: (file: File | null) => void;
   error?: string;
 };
-
-const selectClass =
-  "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
 
 export function CourseMediaPanel({
   fieldId,
@@ -55,62 +54,43 @@ export function CourseMediaPanel({
 
       <div className="space-y-4 px-4 py-4">
         <div>
-          <label
-            htmlFor="course-field-id"
-            className="mb-1.5 block text-sm font-semibold text-gray-700"
-          >
+          <label className="mb-1.5 block text-sm font-semibold text-gray-700">
             Field <span className="text-red-500">*</span>
           </label>
-          <select
-            id="course-field-id"
+          <Select2
+            options={fieldOptions}
             value={fieldId}
-            onChange={(e) => onFieldChange(e.target.value)}
-            className={selectClass}
-          >
-            <option value="">Select a field…</option>
-            {fieldOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.text}
-              </option>
-            ))}
-          </select>
-          {fieldError && <p className="mt-1 text-sm text-red-600">{fieldError}</p>}
+            onChange={onFieldChange}
+            placeholder="Select a field…"
+            searchPlaceholder="Search fields…"
+            error={fieldError}
+            showIcons
+          />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-              Thumbnail
-            </label>
-            <input
-              type="file"
+            <FileUploadDropzone
               accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={(e) => onThumbnailFileChange(e.target.files?.[0] ?? null)}
-              className="block w-full text-xs text-gray-600"
+              file={thumbnailFile}
+              onChange={onThumbnailFileChange}
+              labelSuffix="Thumbnail image"
+              maxSizeMb={25}
+              helperText="File size of your image should not exceed 25MB"
+              previewUrl={previewUrl || undefined}
+              previewAlt="Thumbnail preview"
             />
-            {thumbnailFile && (
-              <p className="mt-1 text-xs text-gray-500">{thumbnailFile.name}</p>
-            )}
-            {previewUrl && (
-              <img
-                src={previewUrl}
-                alt="Thumbnail preview"
-                className="mt-2 h-24 w-40 rounded-md border border-gray-200 object-cover"
-              />
-            )}
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-              Course video
-            </label>
-            <input
-              type="file"
+            <FileUploadDropzone
               accept="video/mp4,video/webm,video/quicktime"
-              onChange={(e) => onVideoFileChange(e.target.files?.[0] ?? null)}
-              className="block w-full text-xs text-gray-600"
+              file={videoFile}
+              onChange={onVideoFileChange}
+              labelSuffix="Course video"
+              maxSizeMb={2048}
+              helperText="File size of your video should not exceed 2GB"
             />
-            {videoFile && <p className="mt-1 text-xs text-gray-500">{videoFile.name}</p>}
           </div>
         </div>
 

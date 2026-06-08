@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { ApiError } from "@/config/api";
 import { courseApi } from "@/app/courses/service/course.service";
@@ -10,6 +10,7 @@ import {
   type CourseLesson,
   type CourseModule,
 } from "@/app/courses/model/course.model";
+import { FileUploadDropzone } from "@/shared/components/FileUploadDropzone";
 
 type CourseCurriculumPanelProps = {
   courseId: string;
@@ -146,12 +147,16 @@ export function CourseCurriculumPanel({
                 )}
               </div>
               <input
-                type="number"
-                value={Number(mod.sortOrder ?? moduleIndex)}
-                onChange={(e) =>
-                  updateModule(moduleIndex, { sortOrder: Number(e.target.value) })
-                }
-                placeholder="Sort order"
+                type="text"
+                inputMode="numeric"
+                value={String(mod.sortOrder ?? moduleIndex)}
+                onChange={(e) => {
+                  const raw = e.target.value.trim();
+                  updateModule(moduleIndex, {
+                    sortOrder: raw === "" ? moduleIndex : Number(raw),
+                  });
+                }}
+                placeholder="e.g. 1"
                 className="rounded-md border border-gray-300 px-3 py-2 text-sm"
               />
             </div>
@@ -214,13 +219,25 @@ export function CourseCurriculumPanel({
                       placeholder="Video URL"
                       className="rounded-md border border-gray-300 px-3 py-2 text-sm sm:col-span-2"
                     />
-                    <input
-                      value={String(lesson.vimeoId ?? "")}
-                      onChange={(e) =>
-                        updateLesson(moduleIndex, lessonIndex, { vimeoId: e.target.value })
-                      }
-                      placeholder="Vimeo ID"
-                      className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                  </div>
+
+                  <div className="mt-2">
+                    {String(lesson.videoUrl ?? "").trim() ? (
+                      <p className="mb-1.5 text-xs font-medium text-green-700">Video attached</p>
+                    ) : null}
+                    <FileUploadDropzone
+                      size="sm"
+                      icon="video"
+                      accept="video/mp4,.mp4"
+                      file={null}
+                      onChange={(file) => {
+                        if (file) uploadLessonVideo(moduleIndex, lessonIndex, file);
+                      }}
+                      labelSuffix="lesson video"
+                      helperText="MP4 · max 2GB"
+                      maxSizeMb={2048}
+                      loading={uploadingKey === uploadKey}
+                      disabled={uploadingKey === uploadKey}
                     />
                   </div>
 
@@ -246,22 +263,6 @@ export function CourseCurriculumPanel({
                         }
                       />
                       Visible
-                    </label>
-                    <label className="inline-flex items-center gap-2 text-xs text-gray-700">
-                      <input
-                        type="file"
-                        accept="video/mp4,video/webm,video/quicktime"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) uploadLessonVideo(moduleIndex, lessonIndex, file);
-                          e.target.value = "";
-                        }}
-                        disabled={uploadingKey === uploadKey}
-                        className="text-xs"
-                      />
-                      {uploadingKey === uploadKey && (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-500" />
-                      )}
                     </label>
                     <button
                       type="button"

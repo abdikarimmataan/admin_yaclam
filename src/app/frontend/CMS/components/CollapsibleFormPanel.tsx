@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { FormField } from "@/app/frontend/CMS/config/api-modules";
 import { CmsFormFields } from "@/app/frontend/CMS/components/CmsFormFields";
 
@@ -14,6 +14,7 @@ type CollapsibleFormPanelProps = {
   errors: Record<string, string>;
   onChange: (key: string, value: unknown) => void;
   defaultOpen?: boolean;
+  children?: ReactNode;
 };
 
 export function CollapsibleFormPanel({
@@ -25,6 +26,7 @@ export function CollapsibleFormPanel({
   errors,
   onChange,
   defaultOpen = false,
+  children,
 }: CollapsibleFormPanelProps) {
   const [open, setOpen] = useState(defaultOpen);
 
@@ -37,7 +39,7 @@ export function CollapsibleFormPanel({
     if (errorCount > 0) setOpen(true);
   }, [errorCount, errors]);
 
-  if (!fields.length) return null;
+  if (!fields.length && !children) return null;
 
   return (
     <div
@@ -67,7 +69,10 @@ export function CollapsibleFormPanel({
       {open && (
         <div className="border-t border-gray-100 px-4 pb-4 pt-3">
           {description && <p className="mb-3 text-xs text-gray-500">{description}</p>}
-          <CmsFormFields fields={fields} form={form} errors={errors} onChange={onChange} />
+          {children}
+          {fields.length > 0 ? (
+            <CmsFormFields fields={fields} form={form} errors={errors} onChange={onChange} />
+          ) : null}
         </div>
       )}
     </div>

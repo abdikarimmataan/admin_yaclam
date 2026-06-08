@@ -3,13 +3,13 @@
 import type { FormField } from "@/app/frontend/CMS/config/cms-field-types";
 import type { Select2Option } from "@/shared/components/Select2";
 import { Select2 } from "@/shared/components/Select2";
+import { publishedDateToDateInputValue } from "@/app/blog/validation/blog.validation";
 import { BlogTagsEditor } from "@/app/blog/components/BlogTagsEditor";
 import { BLOG_FULL_WIDTH_KEYS } from "@/app/blog/model/blog.model";
 
 const PLACEHOLDERS: Record<string, string> = {
   title: "e.g. How to start your data career",
   excerpt: "Short summary shown in listings",
-  publishedDate: "e.g. 2026-01-15",
 };
 
 const inputClass =
@@ -35,6 +35,24 @@ function BlogInput({
   onChange: (value: unknown) => void;
 }) {
   const fieldClass = `${inputClass} ${error ? "border-red-400" : ""}`;
+
+  if (field.key === "publishedDate") {
+    return (
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">
+          {field.label}
+          {field.required && <span className="text-red-500"> *</span>}
+        </label>
+        <input
+          type="date"
+          value={publishedDateToDateInputValue(value)}
+          onChange={(e) => onChange(e.target.value)}
+          className={fieldClass}
+        />
+        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      </div>
+    );
+  }
 
   if (field.key === "readTime") {
     return (

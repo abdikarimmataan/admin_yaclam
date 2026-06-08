@@ -161,7 +161,7 @@ export function Sidebar({
         </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-2.5">
+      <nav className="min-h-0 flex-1 overflow-y-auto p-2.5">
         {NAVIGATION.map((group) => (
           <NavGroup key={group.label} group={group} isOpen={isOpen} pathname={pathname} />
         ))}

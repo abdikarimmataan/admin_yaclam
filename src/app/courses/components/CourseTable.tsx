@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, BookOpen } from "lucide-react";
+import { Pencil, BookOpen, Eye, FileStack } from "lucide-react";
 import type { CourseRecord } from "@/app/courses/model/course.model";
 import {
   getCourseFieldName,
@@ -23,7 +23,9 @@ type CourseTableProps = {
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
   onEdit: (item: CourseRecord) => void;
+  onShow: (item: CourseRecord) => void;
   onCurriculum: (item: CourseRecord) => void;
+  onResources: (item: CourseRecord) => void;
   onToggleVisible: (item: CourseRecord) => void;
 };
 
@@ -43,7 +45,9 @@ export function CourseTable({
   onPageChange,
   onPageSizeChange,
   onEdit,
+  onShow,
   onCurriculum,
+  onResources,
   onToggleVisible,
 }: CourseTableProps) {
   return (
@@ -123,6 +127,26 @@ export function CourseTable({
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => onShow(item)}
+                          disabled={busyId === item.id}
+                          className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                          title="Show preview"
+                        >
+                          <Eye className="h-4 w-4" />
+                          Show
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onResources(item)}
+                          disabled={busyId === item.id}
+                          className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                          title="Resources"
+                        >
+                          <FileStack className="h-4 w-4" />
+                          Resources
+                        </button>
                         <button
                           type="button"
                           onClick={() => onCurriculum(item)}

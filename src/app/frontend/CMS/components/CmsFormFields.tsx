@@ -5,6 +5,7 @@ import type { FormField } from "@/app/frontend/CMS/config/api-modules";
 import { FooterColumnsEditor } from "@/app/frontend/CMS/components/FooterColumnsEditor";
 import { StatsListEditor } from "@/app/frontend/CMS/components/StatsListEditor";
 import { IconSelectField } from "@/shared/components/IconSelectField";
+import { Select2 } from "@/shared/components/Select2";
 import { formFieldDomId } from "@/shared/utils/form-validation";
 
 type CmsFormFieldsProps = {
@@ -18,11 +19,6 @@ function textInputValue(value: unknown): string {
   if (value == null) return "";
   if (typeof value === "object") return "";
   return String(value);
-}
-
-function numberInputValue(value: unknown): number {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
 }
 
 type FieldSegment =
@@ -104,7 +100,7 @@ function FormFieldControl({
   compact?: boolean;
   halfRow?: boolean;
 }) {
-  if (field.key === "icon") {
+  if (field.type === "icon" || field.key === "icon" || field.key.endsWith(".icon")) {
     return (
       <FieldAnchor fieldKey={field.key} error={err}>
         <IconSelectField
@@ -113,7 +109,35 @@ function FormFieldControl({
           value={textInputValue(value)}
           onChange={(v) => onChange(field.key, v)}
           error={err}
+          placeholder={field.placeholder}
         />
+      </FieldAnchor>
+    );
+  }
+
+  if (field.type === "select") {
+    const selectOptions = (field.options ?? []).map((option) => ({
+      id: option.value,
+      text: option.label,
+    }));
+
+    return (
+      <FieldAnchor fieldKey={field.key} error={err}>
+        <div className={compact ? undefined : halfRow ? undefined : "sm:col-span-2"}>
+          <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+            {field.label}
+            {field.required && <span className="text-red-500"> *</span>}
+          </label>
+          <Select2
+            options={selectOptions}
+            value={textInputValue(value)}
+            onChange={(v) => onChange(field.key, v)}
+            placeholder={field.placeholder ?? `Select ${field.label.toLowerCase()}…`}
+            searchPlaceholder={`Search ${field.label.toLowerCase()}…`}
+            error={err}
+            allowClear={!field.required}
+          />
+        </div>
       </FieldAnchor>
     );
   }
@@ -148,6 +172,39 @@ function FormFieldControl({
     err ? "border-red-300" : "border-gray-300"
   }`;
 
+  if (field.type === "number") {
+    const displayValue =
+      value == null || value === "" ? "" : String(value);
+
+    return (
+      <FieldAnchor fieldKey={field.key} error={err}>
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+            {field.label}
+            {field.required && <span className="text-red-500"> *</span>}
+          </label>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={displayValue}
+            onChange={(e) => {
+              const raw = e.target.value.trim();
+              if (!raw) {
+                onChange(field.key, "");
+                return;
+              }
+              const num = Number(raw);
+              onChange(field.key, Number.isFinite(num) ? num : raw);
+            }}
+            className={common}
+            placeholder={field.placeholder}
+          />
+          {err && <p className="mt-1 text-sm text-red-600">{err}</p>}
+        </div>
+      </FieldAnchor>
+    );
+  }
+
   if (field.type === "textarea") {
     return (
       <FieldAnchor fieldKey={field.key} error={err}>
@@ -161,6 +218,7 @@ function FormFieldControl({
             value={textInputValue(value)}
             onChange={(e) => onChange(field.key, e.target.value)}
             className={common}
+            placeholder={field.placeholder}
           />
           {err && <p className="mt-1 text-sm text-red-600">{err}</p>}
         </div>
@@ -239,7 +297,7 @@ function FormFieldControl({
             value={textInputValue(value)}
             onChange={(e) => onChange(field.key, e.target.value)}
             className={common}
-            placeholder="item1, item2, item3"
+            placeholder={field.placeholder ?? "item1, item2, item3"}
           />
           {err && <p className="mt-1 text-sm text-red-600">{err}</p>}
         </div>
@@ -255,12 +313,11 @@ function FormFieldControl({
           {field.required && <span className="text-red-500"> *</span>}
         </label>
         <input
-          type={field.type === "number" ? "number" : field.type === "email" ? "email" : "text"}
-          value={field.type === "number" ? numberInputValue(value) : textInputValue(value)}
-          onChange={(e) =>
-            onChange(field.key, field.type === "number" ? Number(e.target.value) : e.target.value)
-          }
+          type={field.type === "email" ? "email" : "text"}
+          value={textInputValue(value)}
+          onChange={(e) => onChange(field.key, e.target.value)}
           className={common}
+          placeholder={field.placeholder}
         />
         {err && <p className="mt-1 text-sm text-red-600">{err}</p>}
       </div>

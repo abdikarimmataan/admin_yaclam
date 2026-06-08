@@ -5,6 +5,86 @@ import {
   BLOG_FORM_FIELDS,
 } from "@/app/blog/model/blog.model";
 
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function parseMonthToken(token: string): number | null {
+  const trimmed = token.trim();
+  if (!trimmed) return null;
+
+  const asNumber = Number(trimmed);
+  if (Number.isFinite(asNumber) && asNumber >= 1 && asNumber <= 12) {
+    return asNumber;
+  }
+
+  const short = trimmed.toLowerCase().slice(0, 3);
+  const index = MONTH_LABELS.findIndex((label) => label.toLowerCase() === short);
+  return index >= 0 ? index + 1 : null;
+}
+
+function parsePublishedDateParts(value: unknown): { year: number; month: number; day: number } | null {
+  const trimmed = String(value ?? "").trim();
+  if (!trimmed) return null;
+
+  if (/^\d{4}-\d{2}-\d{2}(T|\s|$)/.test(trimmed)) {
+    const date = new Date(trimmed);
+    if (!Number.isNaN(date.getTime())) {
+      return {
+        year: date.getUTCFullYear(),
+        month: date.getUTCMonth() + 1,
+        day: date.getUTCDate(),
+      };
+    }
+  }
+
+  const displayMatch = trimmed.match(/^([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})$/);
+  if (displayMatch) {
+    const year = Number(displayMatch[3]);
+    const month = parseMonthToken(displayMatch[1]);
+    const day = Number(displayMatch[2]);
+    if (!month) return null;
+
+    const date = new Date(year, month - 1, day);
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+      return null;
+    }
+    return { year, month, day };
+  }
+
+  const slashMatch = trimmed.match(/^(\d{4})[/-]([^/]+)[/-](\d{1,2})$/);
+  if (slashMatch) {
+    const year = Number(slashMatch[1]);
+    const month = parseMonthToken(slashMatch[2]);
+    const day = Number(slashMatch[3]);
+    if (!month) return null;
+
+    const date = new Date(year, month - 1, day);
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+      return null;
+    }
+    return { year, month, day };
+  }
+
+  return null;
+}
+
+/** Date input uses YYYY-MM-DD; API accepts ISO or legacy display strings. */
+export function publishedDateToDateInputValue(value: unknown): string {
+  const parts = parsePublishedDateParts(value);
+  if (!parts) return "";
+
+  return `${String(parts.year).padStart(4, "0")}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
+}
+
+export function normalizePublishedDateForApi(value: unknown): string | null {
+  const trimmed = String(value ?? "").trim();
+  if (!trimmed) return "";
+
+  const parts = parsePublishedDateParts(trimmed);
+  if (!parts) return null;
+
+  return `${String(parts.year).padStart(4, "0")}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
+}
+
 function parseTags(raw: unknown): string[] {
   if (Array.isArray(raw)) {
     return raw.map((t) => String(t ?? "").trim()).filter(Boolean);
@@ -36,6 +116,11 @@ export function validateBlogForm(
     errors.categoryId = "Category is required";
   }
 
+  const publishedRaw = String(form.publishedDate ?? "").trim();
+  if (publishedRaw && normalizePublishedDateForApi(publishedRaw) === null) {
+    errors.publishedDate = "Enter a valid published date";
+  }
+
   return errors;
 }
 
@@ -56,6 +141,9 @@ export function buildBlogPayload(
 
     if (key === "readTime") {
       value = Number.isFinite(Number(raw)) ? Number(raw) : 0;
+    } else if (key === "publishedDate") {
+      const normalized = normalizePublishedDateForApi(raw);
+      value = normalized ?? "";
     } else if (key === "tags") {
       value = parseTags(raw);
     } else if (key === "content") {
@@ -104,5 +192,10 @@ export function toBlogFormValues(item: Record<string, unknown>): Record<string, 
   if (!form.publishedDate && form.date) {
     form.publishedDate = form.date;
   }
+
+  if (form.publishedDate != null && form.publishedDate !== "") {
+    form.publishedDate = publishedDateToDateInputValue(form.publishedDate);
+  }
+
   return form;
 }

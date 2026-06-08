@@ -30,8 +30,8 @@ function normalizeCurriculum(value: unknown): CourseModule[] {
 }
 
 /** Backend Joi schema accepts only known fields; status is set via PATCH /status/:id. */
-export function sanitizeCurriculumForApi(curriculum: unknown): CourseModule[] | undefined {
-  if (!Array.isArray(curriculum) || curriculum.length === 0) return undefined;
+export function sanitizeCurriculumForApi(curriculum: unknown): CourseModule[] {
+  if (!Array.isArray(curriculum) || curriculum.length === 0) return [];
 
   const modules = curriculum
     .map((raw, moduleIndex) => {
@@ -67,7 +67,7 @@ export function sanitizeCurriculumForApi(curriculum: unknown): CourseModule[] | 
     })
     .filter(Boolean) as CourseModule[];
 
-  return modules.length ? modules : undefined;
+  return modules;
 }
 
 function sanitizePayloadForBackend(payload: Record<string, unknown>) {
@@ -95,6 +95,11 @@ export function courseRecordToForm(record: CourseRecord | null): Record<string, 
       status: true,
       certificate: true,
       curriculum: [],
+      "instructor.instructorId": "",
+      "instructor.name": "",
+      "instructor.role": "",
+      "instructor.bio": "",
+      "instructor.avatar": "",
     };
   }
 
@@ -102,14 +107,38 @@ export function courseRecordToForm(record: CourseRecord | null): Record<string, 
   const fieldId = getCourseFieldId(record);
   if (fieldId) form.fieldId = fieldId;
 
-  if (record.instructorName && !form["instructor.name"]) {
-    form["instructor.name"] = record.instructorName;
+  const details = record.details;
+  if (details) {
+    if (!String(form.level ?? "").trim() && details.skillLevel) form.level = details.skillLevel;
+    if (!String(form.language ?? "").trim() && details.language) form.language = details.language;
+    if (!String(form.access ?? "").trim() && details.access) form.access = details.access;
+    if (!Number(form.durationHours) && details.durationHours) {
+      form.durationHours = details.durationHours;
+    }
+    if (!Number(form.lessonCount) && details.lessonCount) {
+      form.lessonCount = details.lessonCount;
+    }
   }
-  if (record.level && !form["details.skillLevel"]) {
-    form["details.skillLevel"] = record.level;
+
+  const instructorName = record.instructorName || record.instructor?.name;
+  if (instructorName && !form["instructor.name"]) {
+    form["instructor.name"] = instructorName;
   }
-  if (record.language && !form["details.language"]) {
-    form["details.language"] = record.language;
+
+  const instructorId = String(
+    record.instructor?.instructorId ?? record.instructorId ?? ""
+  ).trim();
+  if (instructorId && !form["instructor.instructorId"]) {
+    form["instructor.instructorId"] = instructorId;
+  }
+  if (record.instructor?.role && !form["instructor.role"]) {
+    form["instructor.role"] = record.instructor.role;
+  }
+  if (record.instructor?.bio && !form["instructor.bio"]) {
+    form["instructor.bio"] = record.instructor.bio;
+  }
+  if (record.instructor?.avatar && !form["instructor.avatar"]) {
+    form["instructor.avatar"] = record.instructor.avatar;
   }
   if (record.overview?.outcomes && !form["overview.outcomes"]) {
     form["overview.outcomes"] = record.overview.outcomes.join(", ");
@@ -147,19 +176,17 @@ export function buildCoursePayload(
   };
 
   payload.details = {
-    skillLevel: String(
-      form["details.skillLevel"] ?? payload.level ?? form.level ?? "Beginner"
-    ),
-    language: String(form["details.language"] ?? payload.language ?? form.language ?? "Somali"),
-    durationHours: Number(form["details.durationHours"] ?? payload.durationHours ?? 0),
-    lessonCount: Number(form["details.lessonCount"] ?? payload.lessonCount ?? 0),
-    certificate: form["details.certificate"] !== false && form.certificate !== false,
-    access: String(form["details.access"] ?? payload.access ?? form.access ?? "1 Year"),
+    skillLevel: String(payload.level ?? form.level ?? "Beginner"),
+    language: String(payload.language ?? form.language ?? "Somali"),
+    durationHours: Number(payload.durationHours ?? form.durationHours ?? 0),
+    lessonCount: Number(payload.lessonCount ?? form.lessonCount ?? 0),
+    certificate: form.certificate !== false,
+    access: String(payload.access ?? form.access ?? "1 Year"),
   };
 
   const instructor = {
     instructorId: String(form["instructor.instructorId"] ?? "").trim() || null,
-    name: String(form["instructor.name"] ?? payload.instructorName ?? form.instructorName ?? ""),
+    name: String(form["instructor.name"] ?? ""),
     role: String(form["instructor.role"] ?? "Practitioner-instructor"),
     bio: String(form["instructor.bio"] ?? ""),
     avatar: String(form["instructor.avatar"] ?? ""),
@@ -168,6 +195,9 @@ export function buildCoursePayload(
 
   if (instructor.name) {
     payload.instructorName = instructor.name;
+  }
+  if (instructor.instructorId) {
+    payload.instructorId = instructor.instructorId;
   }
 
   if (!editing) {

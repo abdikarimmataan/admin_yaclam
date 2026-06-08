@@ -12,12 +12,11 @@ export const COURSE_FORM_PANELS: CourseFormPanel[] = [
   {
     id: "basic",
     title: "Basic information",
-    description: "Title, category, and descriptions",
+    description: "Title and descriptions",
     fieldKeys: [
       "title",
       "shortDescription",
       "description",
-      "category",
       "level",
       "language",
       "duration",
@@ -36,26 +35,7 @@ export const COURSE_FORM_PANELS: CourseFormPanel[] = [
   {
     id: "instructor",
     title: "Instructor",
-    fieldKeys: [
-      "instructorName",
-      "instructor.instructorId",
-      "instructor.name",
-      "instructor.role",
-      "instructor.bio",
-      "instructor.avatar",
-    ],
-  },
-  {
-    id: "details",
-    title: "Course details",
-    fieldKeys: [
-      "details.skillLevel",
-      "details.language",
-      "details.durationHours",
-      "details.lessonCount",
-      "details.certificate",
-      "details.access",
-    ],
+    fieldKeys: [],
   },
   {
     id: "pricing",

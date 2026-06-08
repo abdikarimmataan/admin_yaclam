@@ -69,13 +69,7 @@ export function CourseForm({
             value={String(form.shortDescription ?? "")}
             onChange={(e) => onChange("shortDescription", e.target.value)}
             className={inputClass}
-          />
-        </Field>
-        <Field label="Category">
-          <input
-            value={String(form.category ?? "")}
-            onChange={(e) => onChange("category", e.target.value)}
-            className={inputClass}
+            placeholder="e.g. Learn HTML, CSS, and JavaScript from scratch"
           />
         </Field>
       </div>
@@ -86,6 +80,7 @@ export function CourseForm({
           value={String(form.description ?? "")}
           onChange={(e) => onChange("description", e.target.value)}
           className={inputClass}
+          placeholder="e.g. A complete beginner-friendly course with projects and quizzes"
         />
       </Field>
 
@@ -95,6 +90,7 @@ export function CourseForm({
             value={String(form.instructorName ?? "")}
             onChange={(e) => onChange("instructorName", e.target.value)}
             className={inputClass}
+            placeholder="e.g. Ahmed Hassan"
           />
         </Field>
         <Field label="Thumbnail URL">
@@ -102,6 +98,7 @@ export function CourseForm({
             value={String(form.thumbnail ?? "")}
             onChange={(e) => onChange("thumbnail", e.target.value)}
             className={inputClass}
+            placeholder="e.g. /uploads/courses/thumbnail.jpg"
           />
         </Field>
       </div>
@@ -109,20 +106,32 @@ export function CourseForm({
       <div className="grid grid-cols-2 gap-4">
         <Field label="Price">
           <input
-            type="number"
-            min={0}
-            value={Number(form.price ?? 0)}
-            onChange={(e) => onChange("price", Number(e.target.value))}
+            type="text"
+            inputMode="decimal"
+            value={form.price == null || form.price === "" ? "" : String(form.price)}
+            onChange={(e) => {
+              const raw = e.target.value.trim();
+              onChange("price", raw === "" ? "" : Number(raw));
+            }}
             className={inputClass}
+            placeholder="e.g. 49"
           />
         </Field>
         <Field label="Original price">
           <input
-            type="number"
-            min={0}
-            value={Number(form.originalPrice ?? 0)}
-            onChange={(e) => onChange("originalPrice", Number(e.target.value))}
+            type="text"
+            inputMode="decimal"
+            value={
+              form.originalPrice == null || form.originalPrice === ""
+                ? ""
+                : String(form.originalPrice)
+            }
+            onChange={(e) => {
+              const raw = e.target.value.trim();
+              onChange("originalPrice", raw === "" ? "" : Number(raw));
+            }}
             className={inputClass}
+            placeholder="e.g. 99"
           />
         </Field>
       </div>
@@ -130,19 +139,32 @@ export function CourseForm({
       <div className="grid grid-cols-2 gap-4">
         <Field label="Sort order">
           <input
-            type="number"
-            value={Number(form.sortOrder ?? 0)}
-            onChange={(e) => onChange("sortOrder", Number(e.target.value))}
+            type="text"
+            inputMode="numeric"
+            value={form.sortOrder == null || form.sortOrder === "" ? "" : String(form.sortOrder)}
+            onChange={(e) => {
+              const raw = e.target.value.trim();
+              onChange("sortOrder", raw === "" ? "" : Number(raw));
+            }}
             className={inputClass}
+            placeholder="e.g. 1"
           />
         </Field>
         <Field label="Duration (hours)">
           <input
-            type="number"
-            min={0}
-            value={Number(form.durationHours ?? 0)}
-            onChange={(e) => onChange("durationHours", Number(e.target.value))}
+            type="text"
+            inputMode="decimal"
+            value={
+              form.durationHours == null || form.durationHours === ""
+                ? ""
+                : String(form.durationHours)
+            }
+            onChange={(e) => {
+              const raw = e.target.value.trim();
+              onChange("durationHours", raw === "" ? "" : Number(raw));
+            }}
             className={inputClass}
+            placeholder="e.g. 12"
           />
         </Field>
       </div>

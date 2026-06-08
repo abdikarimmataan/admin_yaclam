@@ -109,6 +109,7 @@ export function Blogpage() {
     setEditing(null);
     const initial = pickFormValues(null, blogKeys);
     initial.readTime = 0;
+    initial.publishedDate = "";
     initial.categoryId = getCategoryRecordId(categories[0]);
     setForm(initial);
     setFormErrors({});
