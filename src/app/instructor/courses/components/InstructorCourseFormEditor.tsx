@@ -190,7 +190,7 @@ export function InstructorCourseFormEditor({
       setUploadFiles({});
 
       if (savedId) {
-        await instructorCourseApi.updateStatus(savedId, form.status !== false);
+        await instructorCourseApi.updateStatus(savedId, true);
       }
 
       toast.success(hadRecord ? "Course updated." : "Course created.");
@@ -274,6 +274,7 @@ export function InstructorCourseFormEditor({
                 onFieldChange={handleFieldChange}
                 fieldError={errors.fieldId}
                 savedThumbnailUrl={String(form.thumbnail ?? "")}
+                savedVideoUrl={String(form.previewVideoUrl ?? "")}
                 thumbnailFile={uploadFiles.thumbnail ?? null}
                 videoFile={uploadFiles.video ?? null}
                 onThumbnailFileChange={(file) =>

@@ -12,6 +12,7 @@ import {
   type CourseResource,
 } from "@/app/courses/model/course.model";
 import type { ResourcesSavePayload } from "@/app/courses/validation/resources.validation";
+import type { CurriculumSavePayload } from "@/app/courses/validation/curriculum.validation";
 import type { CourseListParams, CourseUploadFiles } from "@/app/courses/service/course.service";
 
 const API_BASE_URL =
@@ -24,6 +25,7 @@ const JSON_BODY_KEYS = new Set([
   "curriculum",
   "resources",
   "resourceFileIndexes",
+  "lessonVideoTargets",
   "details",
   "instructor",
   "badges",
@@ -227,13 +229,14 @@ export const instructorCourseApi = {
     courseId: string,
     moduleIndex: number,
     lessonIndex: number,
-    file: File
+    file: File,
+    lessonId?: string
   ) {
     return uploadFormFile(
       `${INSTRUCTOR_COURSE_PATH}/${courseId}/curriculum/lesson-video`,
       "video",
       file,
-      { moduleIndex, lessonIndex }
+      { moduleIndex, lessonIndex, lessonId: lessonId ?? "" }
     );
   },
 
@@ -255,7 +258,21 @@ export const instructorCourseApi = {
     return api.delete<{ message?: string }>(`${INSTRUCTOR_COURSE_PATH}/delete/${id}`);
   },
 
-  saveCurriculum(courseId: string, curriculum: CourseModule[]) {
+  saveCurriculum(courseId: string, payload: CurriculumSavePayload) {
+    const { curriculum, lessonVideoTargets, files } = payload;
+    if (files.length > 0) {
+      const fd = new FormData();
+      fd.append("curriculum", JSON.stringify(curriculum));
+      fd.append("lessonVideoTargets", JSON.stringify(lessonVideoTargets));
+      files.forEach((file) => fd.append("lessonVideos", file));
+
+      return fetch(`${API_BASE_URL}${INSTRUCTOR_COURSE_PATH}/update/${courseId}`, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: fd,
+      }).then(parseCourseResponse);
+    }
+
     return api
       .patch<CourseRecord, { curriculum: CourseModule[] }>(
         `${INSTRUCTOR_COURSE_PATH}/update/${courseId}`,

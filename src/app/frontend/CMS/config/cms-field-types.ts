@@ -27,4 +27,6 @@ export type FormField = {
   rowColumns?: 2 | 3 | 4;
   options?: SelectOption[];
   placeholder?: string;
+  /** Max decimal places for type "number" (e.g. 2 for price fields). */
+  decimals?: number;
 };

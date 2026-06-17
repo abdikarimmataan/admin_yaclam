@@ -67,6 +67,21 @@ export function toStepsList(value: unknown): string {
     .join("\n");
 }
 
+function roundDecimals(value: number, decimals: number) {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
+}
+
+function parseNumberFieldValue(raw: string, decimals?: number): number | string {
+  if (!raw) return "";
+  if (!/^-?\d*\.?\d*$/.test(raw)) return raw;
+  if (raw.endsWith(".") || raw === "-" || raw === "-.") return raw;
+  const num = Number(raw);
+  if (!Number.isFinite(num)) return raw;
+  if (decimals != null) return roundDecimals(num, decimals);
+  return num;
+}
+
 function sanitizeFieldValue(value: unknown, field: FormField): unknown {
   if (field.type === "boolean") {
     if (typeof value === "boolean") return value;
@@ -76,7 +91,8 @@ function sanitizeFieldValue(value: unknown, field: FormField): unknown {
   }
   if (field.type === "number") {
     const n = Number(value);
-    return Number.isFinite(n) ? n : 0;
+    if (!Number.isFinite(n)) return field.decimals != null ? "" : 0;
+    return field.decimals != null ? roundDecimals(n, field.decimals) : n;
   }
   if (
     field.type === "statsList" ||
@@ -189,7 +205,11 @@ export function buildFormPayload(
     let value: unknown = raw;
     if (f.type === "number") {
       const num = Number(raw);
-      value = Number.isFinite(num) ? num : 0;
+      if (!Number.isFinite(num)) {
+        value = f.decimals != null ? 0 : 0;
+      } else {
+        value = f.decimals != null ? roundDecimals(num, f.decimals) : num;
+      }
     } else if (f.type === "stringList") {
       value = String(raw ?? "")
         .split(",")

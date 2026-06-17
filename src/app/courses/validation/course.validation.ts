@@ -76,6 +76,18 @@ function sanitizePayloadForBackend(payload: Record<string, unknown>) {
   delete payload.ctaButton;
   delete payload.wishlistButton;
   delete payload.curriculum;
+  delete payload.durationHours;
+  delete payload.lessonCount;
+  delete payload.rating;
+  delete payload.reviewCount;
+  delete payload.studentCount;
+
+  if (payload.details && typeof payload.details === "object") {
+    const details = { ...(payload.details as Record<string, unknown>) };
+    delete details.durationHours;
+    delete details.lessonCount;
+    payload.details = details;
+  }
 
   if (payload.instructor && typeof payload.instructor === "object") {
     const instructor = { ...(payload.instructor as Record<string, unknown>) };
@@ -112,12 +124,6 @@ export function courseRecordToForm(record: CourseRecord | null): Record<string, 
     if (!String(form.level ?? "").trim() && details.skillLevel) form.level = details.skillLevel;
     if (!String(form.language ?? "").trim() && details.language) form.language = details.language;
     if (!String(form.access ?? "").trim() && details.access) form.access = details.access;
-    if (!Number(form.durationHours) && details.durationHours) {
-      form.durationHours = details.durationHours;
-    }
-    if (!Number(form.lessonCount) && details.lessonCount) {
-      form.lessonCount = details.lessonCount;
-    }
   }
 
   const instructorName = record.instructorName || record.instructor?.name;
@@ -146,6 +152,13 @@ export function courseRecordToForm(record: CourseRecord | null): Record<string, 
 
   form.curriculum = normalizeCurriculum(record.curriculum);
   if (form.status === undefined || form.status === "") form.status = record.status !== false;
+
+  if (record.thumbnail) form.thumbnail = record.thumbnail;
+  const previewVideo =
+    record.previewVideoUrl?.trim() ||
+    record.curriculum?.[0]?.lessons?.[0]?.videoUrl?.trim() ||
+    "";
+  if (previewVideo) form.previewVideoUrl = previewVideo;
 
   return form;
 }
@@ -178,8 +191,6 @@ export function buildCoursePayload(
   payload.details = {
     skillLevel: String(payload.level ?? form.level ?? "Beginner"),
     language: String(payload.language ?? form.language ?? "Somali"),
-    durationHours: Number(payload.durationHours ?? form.durationHours ?? 0),
-    lessonCount: Number(payload.lessonCount ?? form.lessonCount ?? 0),
     certificate: form.certificate !== false,
     access: String(payload.access ?? form.access ?? "1 Year"),
   };
@@ -201,8 +212,10 @@ export function buildCoursePayload(
   }
 
   if (!editing) {
-    payload.isPublished = form.isPublished !== false;
-    payload.isVisible = form.isVisible !== false;
+    payload.isPublished = true;
+    payload.isVisible = true;
+  } else {
+    payload.isPublished = true;
   }
 
   sanitizePayloadForBackend(payload);
