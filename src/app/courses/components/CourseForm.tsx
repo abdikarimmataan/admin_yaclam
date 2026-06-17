@@ -136,46 +136,11 @@ export function CourseForm({
         </Field>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Sort order">
-          <input
-            type="text"
-            inputMode="numeric"
-            value={form.sortOrder == null || form.sortOrder === "" ? "" : String(form.sortOrder)}
-            onChange={(e) => {
-              const raw = e.target.value.trim();
-              onChange("sortOrder", raw === "" ? "" : Number(raw));
-            }}
-            className={inputClass}
-            placeholder="e.g. 1"
-          />
-        </Field>
-        <Field label="Duration (hours)">
-          <input
-            type="text"
-            inputMode="decimal"
-            value={
-              form.durationHours == null || form.durationHours === ""
-                ? ""
-                : String(form.durationHours)
-            }
-            onChange={(e) => {
-              const raw = e.target.value.trim();
-              onChange("durationHours", raw === "" ? "" : Number(raw));
-            }}
-            className={inputClass}
-            placeholder="e.g. 12"
-          />
-        </Field>
-      </div>
-
       <div className="flex flex-wrap gap-4">
         {(
           [
             ["isFree", "Free"],
             ["isFeatured", "Featured"],
-            ["isPublished", "Published"],
-            ["isVisible", "Visible"],
           ] as const
         ).map(([key, label]) => (
           <label

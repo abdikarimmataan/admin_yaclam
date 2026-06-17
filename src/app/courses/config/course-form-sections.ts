@@ -42,38 +42,6 @@ export const COURSE_FORM_PANELS: CourseFormPanel[] = [
     title: "Pricing",
     fieldKeys: ["price", "originalPrice", "isFree", "isFeatured"],
   },
-  {
-    id: "stats",
-    title: "Course stats",
-    fieldKeys: [
-      "durationHours",
-      "lessonCount",
-      "rating",
-      "reviewCount",
-      "studentCount",
-      "sortOrder",
-    ],
-  },
-  {
-    id: "badges",
-    title: "Badges & buttons",
-    fieldKeys: [
-      "badges.premium.text",
-      "badges.premium.isVisible",
-      "badges.free.text",
-      "badges.free.isVisible",
-      "ctaButton.label",
-      "ctaButton.url",
-      "ctaButton.style",
-      "ctaButton.isVisible",
-      "wishlistButton.isVisible",
-    ],
-  },
-  {
-    id: "settings",
-    title: "Publish settings",
-    fieldKeys: ["isPublished", "isVisible", "status"],
-  },
 ];
 
 const fieldMap = new Map(COURSE_FORM_FIELDS.map((f) => [f.key, f]));

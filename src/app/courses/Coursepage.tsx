@@ -162,6 +162,10 @@ export function Coursepage() {
     setResourcesCourseTitle("");
   };
 
+  const handleCurriculumSaved = async () => {
+    await fetchData();
+  };
+
   const handleSaved = async () => {
     await fetchData();
     backToList();
@@ -203,7 +207,7 @@ export function Coursepage() {
         courseId={curriculumCourseId}
         courseTitle={curriculumCourseTitle}
         onBack={backToList}
-        onSaved={handleSaved}
+        onSaved={handleCurriculumSaved}
       />
     );
   }

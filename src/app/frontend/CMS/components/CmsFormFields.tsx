@@ -8,6 +8,21 @@ import { IconSelectField } from "@/shared/components/IconSelectField";
 import { Select2 } from "@/shared/components/Select2";
 import { formFieldDomId } from "@/shared/utils/form-validation";
 
+function roundDecimals(value: number, decimals: number) {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
+}
+
+function parseNumberFieldValue(raw: string, decimals?: number): number | string {
+  if (!raw) return "";
+  if (!/^-?\d*\.?\d*$/.test(raw)) return raw;
+  if (raw.endsWith(".") || raw === "-" || raw === "-.") return raw;
+  const num = Number(raw);
+  if (!Number.isFinite(num)) return raw;
+  if (decimals != null) return roundDecimals(num, decimals);
+  return num;
+}
+
 type CmsFormFieldsProps = {
   fields: FormField[];
   form: Record<string, unknown>;
@@ -193,12 +208,17 @@ function FormFieldControl({
                 onChange(field.key, "");
                 return;
               }
-              const num = Number(raw);
-              onChange(field.key, Number.isFinite(num) ? num : raw);
+              onChange(
+                field.key,
+                parseNumberFieldValue(raw, field.decimals)
+              );
             }}
             className={common}
             placeholder={field.placeholder}
           />
+          {field.decimals != null && (
+            <p className="mt-1 text-xs text-gray-500">Up to {field.decimals} decimal places (e.g. 0.10)</p>
+          )}
           {err && <p className="mt-1 text-sm text-red-600">{err}</p>}
         </div>
       </FieldAnchor>

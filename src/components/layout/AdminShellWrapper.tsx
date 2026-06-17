@@ -6,7 +6,7 @@ import { AdminLayoutShell } from "@/components/layout/AdminLayoutShell";
 export function AdminShellWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLogin = pathname === "/login" || pathname.startsWith("/login/");
-  const isInstructor = pathname.startsWith("/instructor");
+  const isInstructor = pathname === "/instructor" || pathname.startsWith("/instructor/");
 
   if (isLogin || isInstructor) {
     return <>{children}</>;

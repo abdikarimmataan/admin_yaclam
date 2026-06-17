@@ -17,6 +17,11 @@ export type CourseLesson = {
   isVisible?: boolean;
 };
 
+/** UI row — may hold a local video file before save uploads it via multipart. */
+export type CourseLessonFormRow = CourseLesson & {
+  pendingVideoFile?: File | null;
+};
+
 export type CourseModule = {
   title?: string;
   sortOrder?: number;
@@ -58,6 +63,7 @@ export type CourseRecord = {
   instructorId?: string | null;
   instructorName?: string;
   thumbnail?: string;
+  previewVideoUrl?: string;
   price?: number;
   originalPrice?: number;
   isFree?: boolean;
@@ -114,12 +120,6 @@ const COURSE_ACCESS_OPTIONS = [
   { value: "1 Year", label: "1 Year" },
   { value: "Lifetime", label: "Lifetime" },
   { value: "6 Months", label: "6 Months" },
-];
-
-const COURSE_BUTTON_STYLE_OPTIONS = [
-  { value: "primary", label: "Primary" },
-  { value: "secondary", label: "Secondary" },
-  { value: "outline", label: "Outline" },
 ];
 
 export const COURSE_FORM_FIELDS: FormField[] = [
@@ -205,90 +205,18 @@ export const COURSE_FORM_FIELDS: FormField[] = [
     key: "price",
     label: "Price",
     type: "number",
-    placeholder: "e.g. 49",
+    decimals: 2,
+    placeholder: "e.g. 0.10",
   },
   {
     key: "originalPrice",
     label: "Original Price",
     type: "number",
-    placeholder: "e.g. 99",
+    decimals: 2,
+    placeholder: "e.g. 99.00",
   },
   { key: "isFree", label: "Free", type: "boolean" },
   { key: "isFeatured", label: "Featured", type: "boolean" },
-  { key: "isPublished", label: "Published", type: "boolean" },
-  { key: "isVisible", label: "Visible", type: "boolean" },
-  { key: "status", label: "Status", type: "boolean" },
-  {
-    key: "durationHours",
-    label: "Duration Hours",
-    type: "number",
-    placeholder: "e.g. 12",
-  },
-  {
-    key: "lessonCount",
-    label: "Lesson Count",
-    type: "number",
-    placeholder: "e.g. 24",
-  },
-  {
-    key: "rating",
-    label: "Rating",
-    type: "number",
-    placeholder: "e.g. 4.8",
-  },
-  {
-    key: "reviewCount",
-    label: "Review Count",
-    type: "number",
-    placeholder: "e.g. 128",
-  },
-  {
-    key: "studentCount",
-    label: "Student Count",
-    type: "number",
-    placeholder: "e.g. 1500",
-  },
-  {
-    key: "sortOrder",
-    label: "Sort Order",
-    type: "number",
-    placeholder: "e.g. 1",
-  },
-  {
-    key: "badges.premium.text",
-    label: "Premium Badge Text",
-    type: "text",
-    placeholder: "e.g. Premium",
-  },
-  { key: "badges.premium.isVisible", label: "Premium Badge Visible", type: "boolean" },
-  {
-    key: "badges.free.text",
-    label: "Free Badge Text",
-    type: "text",
-    placeholder: "e.g. Free",
-  },
-  { key: "badges.free.isVisible", label: "Free Badge Visible", type: "boolean" },
-  {
-    key: "ctaButton.label",
-    label: "CTA Button Label",
-    type: "text",
-    placeholder: "e.g. Enroll now",
-  },
-  {
-    key: "ctaButton.url",
-    label: "CTA Button URL",
-    type: "text",
-    placeholder: "e.g. /courses/intro-web-dev",
-  },
-  {
-    key: "ctaButton.style",
-    label: "CTA Button Style",
-    type: "select",
-    options: COURSE_BUTTON_STYLE_OPTIONS,
-    placeholder: "e.g. Primary",
-  },
-  { key: "ctaButton.isVisible", label: "CTA Button Visible", type: "boolean" },
-  { key: "wishlistButton.isVisible", label: "Wishlist Visible", type: "boolean" },
 ];
 
 export function resolveUploadUrl(path: string): string {
@@ -343,6 +271,7 @@ export function emptyCurriculumLesson(
     vimeoId: "",
     sortOrder: lessonIndex,
     isVisible: true,
+    pendingVideoFile: null,
   };
 }
 

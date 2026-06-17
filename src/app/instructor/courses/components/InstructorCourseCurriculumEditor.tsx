@@ -18,7 +18,13 @@ type InstructorCourseCurriculumEditorProps = {
 
 function normalizeCurriculum(value: unknown): CourseModule[] {
   if (!Array.isArray(value)) return [];
-  return value as CourseModule[];
+  return value.map((mod) => ({
+    ...(mod as CourseModule),
+    lessons: ((mod as CourseModule).lessons ?? []).map((lesson) => ({
+      ...lesson,
+      pendingVideoFile: null,
+    })),
+  }));
 }
 
 export function InstructorCourseCurriculumEditor({
@@ -54,9 +60,14 @@ export function InstructorCourseCurriculumEditor({
   }, [load]);
 
   const save = async () => {
-    const { payload, errors: formErrors } = buildCurriculumPayload(curriculum);
+    const { payload, errors: formErrors, validationItems } = buildCurriculumPayload(curriculum);
     if (!payload) {
       setErrors(formErrors);
+      if (validationItems.length) {
+        toast.validationErrors(validationItems);
+      } else {
+        toast.error("Please fix curriculum errors before saving.");
+      }
       return;
     }
 
@@ -112,11 +123,13 @@ export function InstructorCourseCurriculumEditor({
         ) : (
           <>
             <InstructorCourseCurriculumPanel
-              courseId={courseId}
               lessonIdPrefix={lessonIdPrefix}
               curriculum={curriculum}
               errors={errors}
-              onChange={setCurriculum}
+              onChange={(next) => {
+                setCurriculum(next);
+                setErrors({});
+              }}
             />
 
             <div className="mt-4 flex justify-end border-t border-slate-200 pt-4">

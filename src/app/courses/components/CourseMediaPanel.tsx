@@ -13,6 +13,7 @@ type CourseMediaPanelProps = {
   onFieldChange: (value: string) => void;
   fieldError?: string;
   savedThumbnailUrl?: string;
+  savedVideoUrl?: string;
   thumbnailFile: File | null;
   videoFile: File | null;
   onThumbnailFileChange: (file: File | null) => void;
@@ -26,30 +27,43 @@ export function CourseMediaPanel({
   onFieldChange,
   fieldError,
   savedThumbnailUrl = "",
+  savedVideoUrl = "",
   thumbnailFile,
   videoFile,
   onThumbnailFileChange,
   onVideoFileChange,
   error,
 }: CourseMediaPanelProps) {
-  const filePreviewUrl = useMemo(
+  const thumbnailPreviewUrl = useMemo(
     () => (thumbnailFile ? URL.createObjectURL(thumbnailFile) : ""),
     [thumbnailFile]
   );
 
+  const videoPreviewUrl = useMemo(
+    () => (videoFile ? URL.createObjectURL(videoFile) : ""),
+    [videoFile]
+  );
+
   useEffect(() => {
     return () => {
-      if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
+      if (thumbnailPreviewUrl) URL.revokeObjectURL(thumbnailPreviewUrl);
+      if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
     };
-  }, [filePreviewUrl]);
+  }, [thumbnailPreviewUrl, videoPreviewUrl]);
 
-  const previewUrl =
-    filePreviewUrl || (savedThumbnailUrl ? resolveUploadUrl(savedThumbnailUrl) : "");
+  const thumbnailSrc =
+    thumbnailPreviewUrl || (savedThumbnailUrl ? resolveUploadUrl(savedThumbnailUrl) : "");
+
+  const videoSrc =
+    videoPreviewUrl || (savedVideoUrl ? resolveUploadUrl(savedVideoUrl) : "");
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white">
       <div className="border-b border-gray-100 px-4 py-3">
         <h3 className="text-sm font-semibold text-gray-900">Media uploads</h3>
+        <p className="mt-0.5 text-xs text-gray-500">
+          Thumbnail and promo video are saved for this course only.
+        </p>
       </div>
 
       <div className="space-y-4 px-4 py-4">
@@ -77,12 +91,13 @@ export function CourseMediaPanel({
               labelSuffix="Thumbnail image"
               maxSizeMb={25}
               helperText="File size of your image should not exceed 25MB"
-              previewUrl={previewUrl || undefined}
+              previewUrl={thumbnailSrc || undefined}
               previewAlt="Thumbnail preview"
+              previewInside={Boolean(thumbnailSrc)}
             />
           </div>
 
-          <div>
+          <div className="space-y-2">
             <FileUploadDropzone
               accept="video/mp4,video/webm,video/quicktime"
               file={videoFile}
@@ -90,7 +105,21 @@ export function CourseMediaPanel({
               labelSuffix="Course video"
               maxSizeMb={2048}
               helperText="File size of your video should not exceed 2GB"
+              icon="video"
             />
+            {videoSrc ? (
+              <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-2">
+                <video
+                  src={videoSrc}
+                  controls
+                  className="max-h-40 w-full rounded-md bg-black object-contain"
+                  preload="metadata"
+                />
+                <p className="mt-1.5 truncate text-[11px] text-gray-500">
+                  {videoFile ? videoFile.name : "Saved course video"}
+                </p>
+              </div>
+            ) : null}
           </div>
         </div>
 
