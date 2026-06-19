@@ -10,7 +10,7 @@ export function getRecordLabel(item: CmsRecord): string {
 }
 
 export function pickFormValues(
-  item: CmsRecord | null,
+  item: object | null,
   keys: string[]
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};

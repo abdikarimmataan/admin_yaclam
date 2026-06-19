@@ -8,7 +8,7 @@ function resolveLucideIcon(name: string): LucideIcon | null {
   const trimmed = name.trim();
   if (!trimmed) return null;
 
-  const icons = LucideIcons as Record<string, LucideIcon>;
+  const icons = LucideIcons as unknown as Record<string, LucideIcon>;
   if (icons[trimmed]) return icons[trimmed];
 
   const pascal = trimmed

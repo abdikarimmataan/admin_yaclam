@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useId, useRef, useState } from "react";
 import { FileImage, Film, Loader2 } from "lucide-react";
 
@@ -137,9 +138,12 @@ export function FileUploadDropzone({
       >
         {showInlinePreview ? (
           <>
-            <img
+            <Image
               src={previewUrl}
-              alt={previewAlt}
+              alt={previewAlt ?? ""}
+              width={320}
+              height={144}
+              unoptimized
               className="max-h-28 w-full rounded-lg object-contain sm:max-h-36"
             />
             <p className={`mt-2 text-gray-700 ${isSm ? "text-xs" : "text-sm"}`}>
@@ -206,9 +210,12 @@ export function FileUploadDropzone({
       ) : null}
 
       {previewUrl && !previewInside ? (
-        <img
+        <Image
           src={previewUrl}
-          alt={previewAlt}
+          alt={previewAlt ?? ""}
+          width={isSm ? 112 : 160}
+          height={isSm ? 64 : 96}
+          unoptimized
           className={
             isSm
               ? "h-16 w-28 rounded-md border border-gray-200 object-cover"

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Pencil } from "lucide-react";
 import type { InstructorRecord } from "@/app/instructors/model/instructor.model";
 import {
@@ -105,9 +106,12 @@ export function InstructorTable({
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
                         {photo ? (
-                          <img
+                          <Image
                             src={photo}
                             alt=""
+                            width={32}
+                            height={32}
+                            unoptimized
                             className="h-8 w-8 rounded-full border border-slate-200 object-cover"
                           />
                         ) : (
