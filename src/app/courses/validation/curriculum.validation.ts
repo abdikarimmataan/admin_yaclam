@@ -1,5 +1,6 @@
 import type { CourseLessonFormRow, CourseModule } from "@/app/courses/model/course.model";
 import { sanitizeCurriculumForApi } from "@/app/courses/validation/course.validation";
+import type { ValidationErrorItem } from "@/shared/utils/form-validation";
 
 export type LessonVideoTarget = {
   moduleIndex: number;
@@ -17,23 +18,21 @@ export function lessonHasVideo(lesson: CourseLessonFormRow): boolean {
   return Boolean(String(lesson.videoUrl ?? "").trim() || lesson.pendingVideoFile);
 }
 
-export type CurriculumValidationItem = {
-  label: string;
-  message: string;
-};
+export type CurriculumValidationItem = ValidationErrorItem;
 
 export type CurriculumValidationResult = {
   errors: Record<string, string>;
-  validationItems: CurriculumValidationItem[];
+  validationItems: ValidationErrorItem[];
 };
 
 export function validateCurriculumForm(curriculum: CourseModule[]): CurriculumValidationResult {
   const errors: Record<string, string> = {};
-  const validationItems: CurriculumValidationItem[] = [];
+  const validationItems: ValidationErrorItem[] = [];
 
   if (curriculum.length === 0) {
     errors._form = "Add at least one module before saving.";
     validationItems.push({
+      key: "_form",
       label: "Curriculum",
       message: "Add at least one module before saving.",
     });
@@ -45,6 +44,7 @@ export function validateCurriculumForm(curriculum: CourseModule[]): CurriculumVa
     if (!String(mod.title ?? "").trim()) {
       errors[`module-${moduleIndex}-title`] = "Module title is required";
       validationItems.push({
+        key: `module-${moduleIndex}-title`,
         label: modTitle,
         message: "Module title is required.",
       });
@@ -56,6 +56,7 @@ export function validateCurriculumForm(curriculum: CourseModule[]): CurriculumVa
       errors[`module-${moduleIndex}-lessons`] =
         "Each module must have at least one lesson with a video.";
       validationItems.push({
+        key: `module-${moduleIndex}-lessons`,
         label: modTitle,
         message: "This module has no lessons. Add a lesson with video or remove the module.",
       });
@@ -67,6 +68,7 @@ export function validateCurriculumForm(curriculum: CourseModule[]): CurriculumVa
       if (!String(lesson.title ?? "").trim()) {
         errors[`module-${moduleIndex}-lesson-${lessonIndex}-title`] = "Lesson title is required";
         validationItems.push({
+          key: `module-${moduleIndex}-lesson-${lessonIndex}-title`,
           label: `${modTitle} › ${lessonTitle}`,
           message: "Lesson title is required.",
         });
@@ -76,6 +78,7 @@ export function validateCurriculumForm(curriculum: CourseModule[]): CurriculumVa
         errors[`module-${moduleIndex}-lesson-${lessonIndex}-video`] =
           "Lesson video is required. Upload a video or remove this lesson.";
         validationItems.push({
+          key: `module-${moduleIndex}-lesson-${lessonIndex}-video`,
           label: modTitle,
           message: `"${lessonTitle}" has no video. Upload a video or remove this lesson.`,
         });
@@ -89,7 +92,7 @@ export function validateCurriculumForm(curriculum: CourseModule[]): CurriculumVa
 export function buildCurriculumPayload(curriculum: CourseModule[]): {
   payload: CurriculumSavePayload | null;
   errors: Record<string, string>;
-  validationItems: CurriculumValidationItem[];
+  validationItems: ValidationErrorItem[];
 } {
   const { errors, validationItems } = validateCurriculumForm(curriculum);
   if (Object.keys(errors).length > 0) {
@@ -115,7 +118,10 @@ export function buildCurriculumPayload(curriculum: CourseModule[]): {
   const sanitized = sanitizeCurriculumForApi(
     curriculum.map((mod) => ({
       ...mod,
-      lessons: (mod.lessons ?? []).map(({ pendingVideoFile: _pending, ...lesson }) => lesson),
+      lessons: (mod.lessons ?? []).map((row) => {
+        const { pendingVideoFile: _pending, ...lesson } = row as CourseLessonFormRow;
+        return lesson;
+      }),
     }))
   );
 

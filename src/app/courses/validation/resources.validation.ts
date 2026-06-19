@@ -46,7 +46,10 @@ export function buildResourcesPayload(rows: CourseResourceFormRow[]): {
   }
 
   const resources = sanitizeResourcesForApi(
-    rows.map(({ pendingFile: _pendingFile, ...rest }) => rest)
+    rows.map(({ pendingFile, ...rest }) => {
+      void pendingFile;
+      return rest;
+    })
   );
   const resourceFileIndexes: number[] = [];
   const files: File[] = [];

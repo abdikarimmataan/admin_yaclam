@@ -72,16 +72,6 @@ function roundDecimals(value: number, decimals: number) {
   return Math.round(value * factor) / factor;
 }
 
-function parseNumberFieldValue(raw: string, decimals?: number): number | string {
-  if (!raw) return "";
-  if (!/^-?\d*\.?\d*$/.test(raw)) return raw;
-  if (raw.endsWith(".") || raw === "-" || raw === "-.") return raw;
-  const num = Number(raw);
-  if (!Number.isFinite(num)) return raw;
-  if (decimals != null) return roundDecimals(num, decimals);
-  return num;
-}
-
 function sanitizeFieldValue(value: unknown, field: FormField): unknown {
   if (field.type === "boolean") {
     if (typeof value === "boolean") return value;

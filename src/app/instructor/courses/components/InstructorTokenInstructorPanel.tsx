@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { InstructorRecord } from "@/app/instructors/model/instructor.model";
 import {
   getInstructorLabel,
@@ -39,9 +40,12 @@ export function InstructorTokenInstructorPanel({
       </p>
       <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3">
         {photoUrl ? (
-          <img
+          <Image
             src={photoUrl}
             alt={getInstructorLabel(instructor)}
+            width={56}
+            height={56}
+            unoptimized
             className="h-14 w-14 shrink-0 rounded-full border border-slate-200 object-cover"
           />
         ) : (
