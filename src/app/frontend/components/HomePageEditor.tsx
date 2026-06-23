@@ -197,8 +197,6 @@ export function HomePageEditor() {
   return (
     <div className="space-y-8">
       <h1 className="text-xl font-bold text-gray-900">Home Page</h1>
-
-      {/* Block 1: /home */}
       <section className="rounded-xl border border-blue-100 bg-blue-50/30 p-4 sm:p-5">
         <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-base font-bold text-gray-900">Home content</h2>

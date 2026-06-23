@@ -31,7 +31,7 @@ export function logout() {
 }
 
 export function isAuthenticated(): boolean {
-  return !!store.get(keys.accessToken);
+  return !!store.getValidAccessToken();
 }
 
 export function getStoredUser() {

@@ -2,7 +2,6 @@ import { api } from "@/config/api";
 import type { ApiError, PaginatedResponse } from "@/config/api";
 import { normalizePaginated } from "@/config/pagination";
 import { normalizeCmsRecord } from "@/app/frontend/CMS/lib/cms-record";
-import { keys } from "@/util/store.keys";
 import { store } from "@/util/storage";
 import {
   INSTRUCTOR_API_PATH,
@@ -20,7 +19,7 @@ function listQuery(params: { page?: number; pageSize?: number } = {}) {
 
 function authHeaders(): Headers {
   const headers = new Headers({ Accept: "application/json" });
-  const token = store.get(keys.accessToken);
+  const token = store.getValidAccessToken();
   if (token) headers.set("Authorization", `Bearer ${token}`);
   return headers;
 }

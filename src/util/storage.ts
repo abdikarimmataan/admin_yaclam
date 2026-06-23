@@ -1,7 +1,20 @@
+import { isAccessTokenExpired } from "@/util/token-expiry";
+import { keys } from "@/util/store.keys";
+
 export const store = {
   get(key: string): string | null {
     if (typeof window === "undefined") return null;
     return localStorage.getItem(key);
+  },
+
+  getValidAccessToken(): string | null {
+    const token = this.get(keys.accessToken);
+    if (!token) return null;
+    if (isAccessTokenExpired(token)) {
+      this.clearAuth();
+      return null;
+    }
+    return token;
   },
   set(key: string, value: string) {
     if (typeof window === "undefined") return;

@@ -1,4 +1,3 @@
-import { keys } from "@/util/store.keys";
 import { store } from "@/util/storage";
 import type { ValidationError } from "@/app/login/model/auth.model";
 
@@ -37,7 +36,7 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9000/api";
 
 function getAuthToken(): string | null {
-  return store.get(keys.accessToken);
+  return store.getValidAccessToken();
 }
 
 function extractMessage(body: unknown, fallback: string): string {
@@ -84,18 +83,13 @@ async function request<T>(endpoint: string, options?: RequestOpts): Promise<T> {
         errors: extractValidationErrors(body),
       };
 
-      if (
-        res.status === 401 &&
-        typeof window !== "undefined" &&
-        options?.method &&
-        options.method !== "GET"
-      ) {
+      if (res.status === 401 && typeof window !== "undefined") {
         store.clearAuth();
         const path = window.location.pathname;
         const loginPath =
           path === "/instructor" || path.startsWith("/instructor/") ? "/instructor/login" : "/login";
         if (!path.startsWith(loginPath)) {
-          window.location.href = `${loginPath}?redirect=${encodeURIComponent(path)}`;
+          window.location.replace(`${loginPath}?redirect=${encodeURIComponent(path)}`);
         }
       }
 

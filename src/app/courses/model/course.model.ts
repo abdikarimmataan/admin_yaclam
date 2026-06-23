@@ -11,7 +11,9 @@ export type CourseLesson = {
   title?: string;
   duration?: string;
   free?: boolean;
+  lessonType?: "video" | "link";
   videoUrl?: string;
+  linkUrl?: string;
   vimeoId?: string;
   sortOrder?: number;
   isVisible?: boolean;
@@ -260,14 +262,16 @@ export function emptyCurriculumLesson(
   moduleIndex: number,
   lessonIndex: number,
   courseId = "course"
-) {
+): CourseLessonFormRow {
   const prefix = String(courseId).trim() || "course";
   return {
     id: `${prefix}-m${moduleIndex + 1}-l${lessonIndex + 1}`,
     title: "",
     duration: "",
     free: false,
+    lessonType: "video" as const,
     videoUrl: "",
+    linkUrl: "",
     vimeoId: "",
     sortOrder: lessonIndex,
     isVisible: true,

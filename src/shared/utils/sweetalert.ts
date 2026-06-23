@@ -60,3 +60,31 @@ export function showError(message: string) {
 export function showSuccess(message: string) {
   toast.success(message);
 }
+
+export async function confirmLessonTypeChange(html: string): Promise<boolean> {
+  const result = await Swal.fire({
+    title: "Change lesson video type?",
+    html,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#0f172a",
+    cancelButtonColor: "#94a3b8",
+    confirmButtonText: "Yes, change type",
+    cancelButtonText: "Cancel",
+  });
+  return result.isConfirmed;
+}
+
+export async function confirmCurriculumSave(html: string): Promise<boolean> {
+  const result = await Swal.fire({
+    title: "Save curriculum changes?",
+    html,
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonColor: "#0f172a",
+    cancelButtonColor: "#94a3b8",
+    confirmButtonText: "Yes, save curriculum",
+    cancelButtonText: "Cancel",
+  });
+  return result.isConfirmed;
+}

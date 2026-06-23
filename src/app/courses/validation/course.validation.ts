@@ -11,6 +11,7 @@ import {
   type CourseRecord,
   getCourseFieldId,
 } from "@/app/courses/model/course.model";
+import { resolveLessonType } from "@/app/courses/lib/lesson-media";
 
 function getFormFields(): FormField[] {
   return COURSE_FORM_FIELDS.filter((f) => f.key !== "fieldId");
@@ -41,12 +42,15 @@ export function sanitizeCurriculumForApi(curriculum: unknown): CourseModule[] {
         .map((lesson, lessonIndex) => {
           const lessonTitle = String(lesson.title ?? "").trim();
           if (!lessonTitle) return null;
+          const lessonType = resolveLessonType(lesson);
           return {
             id: String(lesson.id ?? `lesson-${moduleIndex + 1}-${lessonIndex + 1}`).trim(),
             title: lessonTitle,
             duration: String(lesson.duration ?? ""),
             free: !!lesson.free,
-            videoUrl: String(lesson.videoUrl ?? ""),
+            lessonType,
+            videoUrl: lessonType === "video" ? String(lesson.videoUrl ?? "") : "",
+            linkUrl: lessonType === "link" ? String(lesson.linkUrl ?? "").trim() : "",
             vimeoId: String(lesson.vimeoId ?? ""),
             sortOrder: Number.isFinite(Number(lesson.sortOrder))
               ? Number(lesson.sortOrder)

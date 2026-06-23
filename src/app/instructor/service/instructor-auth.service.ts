@@ -27,7 +27,7 @@ export async function instructorLogin(payload: InstructorLoginPayload) {
 }
 
 export function isInstructorAuthenticated(): boolean {
-  return !!store.get(keys.accessToken) && store.get(keys.accountType) === "instructor";
+  return !!store.getValidAccessToken() && store.get(keys.accountType) === "instructor";
 }
 
 export function getStoredInstructorId(): string {
