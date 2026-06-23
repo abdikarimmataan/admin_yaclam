@@ -1,4 +1,3 @@
-import { keys } from "@/util/store.keys";
 import { store } from "@/util/storage";
 import type { ApiError, PaginatedResponse } from "@/config/api";
 import type { ValidationError } from "@/app/login/model/auth.model";
@@ -46,7 +45,7 @@ function buildQuery(params: CourseListParams = {}) {
 
 function authHeaders(): Headers {
   const headers = new Headers({ Accept: "application/json" });
-  const token = store.get(keys.accessToken);
+  const token = store.getValidAccessToken();
   if (token) headers.set("Authorization", `Bearer ${token}`);
   return headers;
 }

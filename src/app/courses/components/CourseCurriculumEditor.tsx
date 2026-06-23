@@ -7,6 +7,9 @@ import { CourseCurriculumPanel } from "@/app/courses/components/CourseCurriculum
 import type { CourseModule } from "@/app/courses/model/course.model";
 import { courseApi } from "@/app/courses/service/course.service";
 import { buildCurriculumPayload } from "@/app/courses/validation/curriculum.validation";
+import { collectCurriculumSaveImpacts } from "@/app/courses/lib/curriculum-lesson-changes";
+import { resolveLessonType } from "@/app/courses/lib/lesson-media";
+import { confirmCurriculumSave } from "@/shared/utils/sweetalert";
 import { toast } from "@/shared/utils/toast";
 
 type CourseCurriculumEditorProps = {
@@ -22,6 +25,7 @@ function normalizeCurriculum(value: unknown): CourseModule[] {
     ...(mod as CourseModule),
     lessons: ((mod as CourseModule).lessons ?? []).map((lesson) => ({
       ...lesson,
+      lessonType: resolveLessonType(lesson),
       pendingVideoFile: null,
     })),
   }));
@@ -34,6 +38,7 @@ export function CourseCurriculumEditor({
   onSaved,
 }: CourseCurriculumEditorProps) {
   const [curriculum, setCurriculum] = useState<CourseModule[]>([]);
+  const [initialCurriculum, setInitialCurriculum] = useState<CourseModule[]>([]);
   const [lessonIdPrefix, setLessonIdPrefix] = useState("course");
   const [hadCurriculum, setHadCurriculum] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -46,6 +51,7 @@ export function CourseCurriculumEditor({
       const record = await courseApi.getById(courseId);
       const existing = normalizeCurriculum(record.curriculum);
       setCurriculum(existing);
+      setInitialCurriculum(existing);
       setHadCurriculum(existing.length > 0);
       setLessonIdPrefix(String(record.id ?? courseId).trim() || courseId);
     } catch (err) {
@@ -71,6 +77,19 @@ export function CourseCurriculumEditor({
       return;
     }
 
+    const impacts = collectCurriculumSaveImpacts(initialCurriculum, curriculum);
+    if (impacts.length > 0) {
+      const confirmed = await confirmCurriculumSave(
+        [
+          "These lesson changes will be applied when you save:",
+          "<ul style='text-align:left;margin:0.75rem 0 0;padding-left:1.25rem'>",
+          ...impacts.map((line) => `<li style='margin-bottom:0.5rem'>${line}</li>`),
+          "</ul>",
+        ].join("")
+      );
+      if (!confirmed) return;
+    }
+
     setSaving(true);
     setErrors({});
 
@@ -78,6 +97,7 @@ export function CourseCurriculumEditor({
       const saved = await courseApi.saveCurriculum(courseId, payload);
       const next = normalizeCurriculum(saved.curriculum);
       setCurriculum(next);
+      setInitialCurriculum(next);
       setHadCurriculum(next.length > 0);
       toast.success(hadCurriculum ? "Curriculum updated." : "Curriculum created.");
       onSaved();

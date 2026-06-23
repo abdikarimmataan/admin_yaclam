@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Link2, Plus, Trash2, Video } from "lucide-react";
 import { useRef, useState } from "react";
 import {
   emptyCurriculumLesson,
@@ -8,6 +8,11 @@ import {
   type CourseLessonFormRow,
   type CourseModule,
 } from "@/app/courses/model/course.model";
+import { resolveLessonType } from "@/app/courses/lib/lesson-media";
+import {
+  describeLessonTypeSwitch,
+} from "@/app/courses/lib/curriculum-lesson-changes";
+import { confirmLessonTypeChange } from "@/shared/utils/sweetalert";
 import { FileUploadDropzone } from "@/shared/components/FileUploadDropzone";
 
 type CourseCurriculumPanelProps = {
@@ -93,6 +98,56 @@ export function CourseCurriculumPanel({
 
   const clearLessonVideo = (moduleIndex: number, lessonIndex: number) => {
     updateLesson(moduleIndex, lessonIndex, {
+      videoUrl: "",
+      pendingVideoFile: null,
+    });
+    const key = `${moduleIndex}-${lessonIndex}`;
+    setResetKeys((prev) => ({ ...prev, [key]: (prev[key] ?? 0) + 1 }));
+  };
+
+  const setLessonType = async (
+    moduleIndex: number,
+    lessonIndex: number,
+    lessonType: "video" | "link"
+  ) => {
+    const row = curriculumRef.current[moduleIndex]?.lessons?.[lessonIndex] as
+      | CourseLessonFormRow
+      | undefined;
+    if (!row) return;
+
+    const currentType = resolveLessonType(row);
+    if (currentType === lessonType) return;
+
+    const videoUrl = String(row.videoUrl ?? "").trim();
+    const linkUrl = String(row.linkUrl ?? "").trim();
+    const pendingFile = row.pendingVideoFile ?? null;
+    const needsConfirm =
+      (lessonType === "link" && (videoUrl || pendingFile)) ||
+      (lessonType === "video" && linkUrl);
+
+    if (needsConfirm) {
+      const confirmed = await confirmLessonTypeChange(
+        describeLessonTypeSwitch({
+          lessonTitle: String(row.title ?? "").trim() || `Lesson ${lessonIndex + 1}`,
+          fromType: currentType,
+          toType: lessonType,
+          videoUrl,
+          linkUrl,
+          pendingVideoName: pendingFile?.name,
+        })
+      );
+      if (!confirmed) return;
+    }
+
+    if (lessonType === "video") {
+      updateLesson(moduleIndex, lessonIndex, {
+        lessonType,
+        linkUrl: "",
+      });
+      return;
+    }
+    updateLesson(moduleIndex, lessonIndex, {
+      lessonType,
       videoUrl: "",
       pendingVideoFile: null,
     });
@@ -201,7 +256,10 @@ export function CourseCurriculumPanel({
             {(mod.lessons ?? []).map((lesson, lessonIndex) => {
               const row = lesson as CourseLessonFormRow;
               const uploadKey = `${moduleIndex}-${lessonIndex}`;
+              const lessonType = resolveLessonType(row);
+              const isLinkLesson = lessonType === "link";
               const videoUrl = String(row.videoUrl ?? "").trim();
+              const linkUrl = String(row.linkUrl ?? "").trim();
               const pendingFile = row.pendingVideoFile ?? null;
               const hasSavedVideo = Boolean(videoUrl && !pendingFile);
 
@@ -210,6 +268,33 @@ export function CourseCurriculumPanel({
                   key={row.id ?? uploadKey}
                   className="rounded-md border border-gray-200 bg-white p-3"
                 >
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setLessonType(moduleIndex, lessonIndex, "video")}
+                      className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition ${
+                        !isLinkLesson
+                          ? "border-slate-700 bg-slate-700 text-white"
+                          : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      <Video className="h-3.5 w-3.5" />
+                      Video upload
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLessonType(moduleIndex, lessonIndex, "link")}
+                      className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition ${
+                        isLinkLesson
+                          ? "border-slate-700 bg-slate-700 text-white"
+                          : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      <Link2 className="h-3.5 w-3.5" />
+                      Video link
+                    </button>
+                  </div>
+
                   <div className="grid gap-2 sm:grid-cols-2">
                     <div>
                       <input
@@ -229,12 +314,25 @@ export function CourseCurriculumPanel({
                     <div className="relative">
                       <input
                         value={String(row.duration ?? "")}
-                        readOnly
-                        placeholder="Auto from video"
-                        className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 cursor-default select-none"
-                        title="Duration is set automatically from the selected video"
+                        readOnly={!isLinkLesson}
+                        onChange={(e) =>
+                          isLinkLesson
+                            ? updateLesson(moduleIndex, lessonIndex, { duration: e.target.value })
+                            : undefined
+                        }
+                        placeholder={isLinkLesson ? "Duration (e.g. 12:30)" : "Auto from video"}
+                        className={`w-full rounded-md border px-3 py-2 text-sm ${
+                          isLinkLesson
+                            ? "border-gray-300"
+                            : "cursor-default select-none border-gray-200 bg-gray-50 text-gray-500"
+                        }`}
+                        title={
+                          isLinkLesson
+                            ? "Enter lesson duration manually"
+                            : "Duration is set automatically from the selected video"
+                        }
                       />
-                      {!row.duration && (
+                      {!row.duration && !isLinkLesson && (
                         <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">
                           auto
                         </span>
@@ -243,42 +341,65 @@ export function CourseCurriculumPanel({
                   </div>
 
                   <div className="mt-2">
-                    {hasSavedVideo ? (
-                      <div className="mb-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-                        <p className="text-xs font-medium text-slate-700">Current video</p>
-                        <div className="mt-1 flex flex-wrap items-center gap-2">
-                          <span className="text-sm text-slate-900">
-                            {videoUrl.split("/").pop()}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => clearLessonVideo(moduleIndex, lessonIndex)}
-                            className="text-xs font-semibold text-red-600 hover:underline"
-                          >
-                            Remove video
-                          </button>
-                        </div>
+                    {isLinkLesson ? (
+                      <div>
+                        <input
+                          value={linkUrl}
+                          onChange={(e) =>
+                            updateLesson(moduleIndex, lessonIndex, { linkUrl: e.target.value })
+                          }
+                          placeholder="YouTube or video URL *"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                        />
+                        <p className="mt-1 text-[11px] text-gray-500">
+                          Paste a YouTube, Vimeo, or other video link
+                        </p>
+                        {errors[`module-${moduleIndex}-lesson-${lessonIndex}-video`] && (
+                          <p className="mt-1 text-xs text-red-600">
+                            {errors[`module-${moduleIndex}-lesson-${lessonIndex}-video`]}
+                          </p>
+                        )}
                       </div>
-                    ) : null}
+                    ) : (
+                      <>
+                        {hasSavedVideo ? (
+                          <div className="mb-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+                            <p className="text-xs font-medium text-slate-700">Current video</p>
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
+                              <span className="text-sm text-slate-900">
+                                {videoUrl.split("/").pop()}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => clearLessonVideo(moduleIndex, lessonIndex)}
+                                className="text-xs font-semibold text-red-600 hover:underline"
+                              >
+                                Remove video
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
 
-                    {pendingFile ? (
-                      <p className="mb-2 text-xs font-medium text-green-700">
-                        New video selected: {pendingFile.name}
-                      </p>
-                    ) : null}
+                        {pendingFile ? (
+                          <p className="mb-2 text-xs font-medium text-green-700">
+                            New video selected: {pendingFile.name}
+                          </p>
+                        ) : null}
 
-                    <FileUploadDropzone
-                      key={resetKeys[uploadKey] ?? 0}
-                      size="sm"
-                      icon="video"
-                      accept="video/mp4,.mp4"
-                      file={pendingFile}
-                      onChange={(file) => pickLessonVideo(moduleIndex, lessonIndex, file)}
-                      labelSuffix={hasSavedVideo || pendingFile ? "replace video" : "lesson video"}
-                      helperText="MP4 · max 2GB · saved when you click Save curriculum"
-                      maxSizeMb={2048}
-                      error={errors[`module-${moduleIndex}-lesson-${lessonIndex}-video`]}
-                    />
+                        <FileUploadDropzone
+                          key={resetKeys[uploadKey] ?? 0}
+                          size="sm"
+                          icon="video"
+                          accept="video/mp4,.mp4"
+                          file={pendingFile}
+                          onChange={(file) => pickLessonVideo(moduleIndex, lessonIndex, file)}
+                          labelSuffix={hasSavedVideo || pendingFile ? "replace video" : "lesson video"}
+                          helperText="MP4 · max 2GB · saved when you click Save curriculum"
+                          maxSizeMb={2048}
+                          error={errors[`module-${moduleIndex}-lesson-${lessonIndex}-video`]}
+                        />
+                      </>
+                    )}
                   </div>
 
                   <div className="mt-2 flex flex-wrap items-center gap-3">

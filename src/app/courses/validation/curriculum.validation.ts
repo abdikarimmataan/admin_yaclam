@@ -1,4 +1,5 @@
 import type { CourseLessonFormRow, CourseModule } from "@/app/courses/model/course.model";
+import { isValidExternalLessonUrl, resolveLessonType } from "@/app/courses/lib/lesson-media";
 import { sanitizeCurriculumForApi } from "@/app/courses/validation/course.validation";
 import type { ValidationErrorItem } from "@/shared/utils/form-validation";
 
@@ -16,6 +17,13 @@ export type CurriculumSavePayload = {
 
 export function lessonHasVideo(lesson: CourseLessonFormRow): boolean {
   return Boolean(String(lesson.videoUrl ?? "").trim() || lesson.pendingVideoFile);
+}
+
+export function lessonHasContent(lesson: CourseLessonFormRow): boolean {
+  if (resolveLessonType(lesson) === "link") {
+    return isValidExternalLessonUrl(String(lesson.linkUrl ?? ""));
+  }
+  return lessonHasVideo(lesson);
 }
 
 export type CurriculumValidationItem = ValidationErrorItem;
@@ -74,13 +82,17 @@ export function validateCurriculumForm(curriculum: CourseModule[]): CurriculumVa
         });
       }
 
-      if (!lessonHasVideo(lesson as CourseLessonFormRow)) {
-        errors[`module-${moduleIndex}-lesson-${lessonIndex}-video`] =
-          "Lesson video is required. Upload a video or remove this lesson.";
+      if (!lessonHasContent(lesson as CourseLessonFormRow)) {
+        const isLink = resolveLessonType(lesson as CourseLessonFormRow) === "link";
+        errors[`module-${moduleIndex}-lesson-${lessonIndex}-video`] = isLink
+          ? "Lesson link is required. Enter a valid URL or remove this lesson."
+          : "Lesson video is required. Upload a video or remove this lesson.";
         validationItems.push({
           key: `module-${moduleIndex}-lesson-${lessonIndex}-video`,
           label: modTitle,
-          message: `"${lessonTitle}" has no video. Upload a video or remove this lesson.`,
+          message: isLink
+            ? `"${lessonTitle}" has no link. Enter a valid URL or remove this lesson.`
+            : `"${lessonTitle}" has no video. Upload a video or remove this lesson.`,
         });
       }
     });
