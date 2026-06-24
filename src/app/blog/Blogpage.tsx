@@ -12,6 +12,7 @@ import { BlogModal } from "@/app/blog/components/BlogModal";
 import { BlogTable } from "@/app/blog/components/BlogTable";
 import {
   BLOG_FORM_FIELDS,
+  getBlogPostLabel,
   sortBlogPostsByLatestSaved,
   type BlogPostRecord,
 } from "@/app/blog/model/blog.model";
@@ -24,7 +25,7 @@ import {
 } from "@/app/blog/validation/blog.validation";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { pickFormValues } from "@/app/frontend/CMS/lib/cms-utils";
-import { showError } from "@/shared/utils/sweetalert";
+import { showError, confirmDelete } from "@/shared/utils/sweetalert";
 import { toast } from "@/shared/utils/toast";
 import type { Select2Option } from "@/shared/components/Select2";
 
@@ -49,6 +50,8 @@ export function Blogpage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
+  const [coverCleared, setCoverCleared] = useState(false);
 
   const categoryOptions: Select2Option[] = useMemo(
     () =>
@@ -101,6 +104,11 @@ export function Blogpage() {
   const canPrev = page > 1;
   const canNext = page < totalPages;
 
+  const resetCoverState = () => {
+    setPendingCoverFile(null);
+    setCoverCleared(false);
+  };
+
   const openCreate = () => {
     if (categories.length === 0) {
       toast.error("Create at least one blog category before adding posts.");
@@ -113,6 +121,7 @@ export function Blogpage() {
     initial.categoryId = getCategoryRecordId(categories[0]);
     setForm(initial);
     setFormErrors({});
+    resetCoverState();
     setShowModal(true);
   };
 
@@ -123,8 +132,12 @@ export function Blogpage() {
     try {
       const record = await blogPostApi.getById(id);
       setEditing(record);
-      setForm(toBlogFormValues(pickFormValues(record, blogKeys)));
+      setForm({
+        ...toBlogFormValues(pickFormValues(record, blogKeys)),
+        coverImage: record.coverImage ?? "",
+      });
       setFormErrors({});
+      resetCoverState();
       setShowModal(true);
     } catch (err) {
       await showError((err as ApiError).message || "Failed to load blog post");
@@ -137,6 +150,12 @@ export function Blogpage() {
     setShowModal(false);
     setEditing(null);
     setFormErrors({});
+    resetCoverState();
+  };
+
+  const handlePendingCoverChange = (file: File | null) => {
+    setPendingCoverFile(file);
+    setCoverCleared(file === null);
   };
 
   const handleSubmit = async () => {
@@ -150,6 +169,12 @@ export function Blogpage() {
     const payload = buildBlogPayload(form, Boolean(editing));
     setSubmitting(true);
     try {
+      if (pendingCoverFile) {
+        payload.coverImage = await blogPostApi.uploadCoverImage(pendingCoverFile);
+      } else if (coverCleared) {
+        payload.coverImage = "";
+      }
+
       if (editing?.id) {
         await blogPostApi.update(String(editing.id), payload);
       } else {
@@ -197,6 +222,24 @@ export function Blogpage() {
     }
   };
 
+  const handleDelete = async (item: BlogPostRecord) => {
+    if (!item.id) return;
+    const title = getBlogPostLabel(item);
+    const confirmed = await confirmDelete(title);
+    if (!confirmed) return;
+
+    setBusyId(String(item.id));
+    try {
+      await blogPostApi.remove(String(item.id));
+      toast.success("Deleted successfully");
+      await fetchItems();
+    } catch (err) {
+      await showError((err as ApiError).message || "Delete failed");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
     <div>
       <div className="mb-4">
@@ -231,6 +274,7 @@ export function Blogpage() {
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
         onEdit={openEdit}
+        onDelete={handleDelete}
         onTogglePublished={handleTogglePublished}
       />
 
@@ -242,10 +286,13 @@ export function Blogpage() {
         formErrors={formErrors}
         fields={getModalFields(Boolean(editing))}
         categoryOptions={categoryOptions}
+        pendingCoverFile={pendingCoverFile}
+        coverCleared={coverCleared}
         submitting={submitting}
         onClose={closeModal}
         onSubmit={handleSubmit}
         onChange={(key, value) => setForm((f) => ({ ...f, [key]: value }))}
+        onPendingCoverChange={handlePendingCoverChange}
       />
     </div>
   );

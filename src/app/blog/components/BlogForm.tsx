@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
 import type { FormField } from "@/app/frontend/CMS/config/cms-field-types";
 import type { Select2Option } from "@/shared/components/Select2";
 import { Select2 } from "@/shared/components/Select2";
+import { FileUploadDropzone } from "@/shared/components/FileUploadDropzone";
+import { resolveAssetUrl } from "@/shared/utils/asset-url";
 import { publishedDateToDateInputValue } from "@/app/blog/validation/blog.validation";
 import { BlogTagsEditor } from "@/app/blog/components/BlogTagsEditor";
 import { BLOG_FULL_WIDTH_KEYS } from "@/app/blog/model/blog.model";
@@ -20,6 +23,9 @@ type BlogFormProps = {
   form: Record<string, unknown>;
   formErrors: Record<string, string>;
   categoryOptions: Select2Option[];
+  pendingCoverFile: File | null;
+  coverCleared: boolean;
+  onPendingCoverChange: (file: File | null) => void;
   onChange: (key: string, value: unknown) => void;
 };
 
@@ -127,7 +133,33 @@ function chunkFields<T>(items: T[], size: number): T[][] {
   return rows;
 }
 
-export function BlogForm({ fields, form, formErrors, categoryOptions, onChange }: BlogFormProps) {
+export function BlogForm({
+  fields,
+  form,
+  formErrors,
+  categoryOptions,
+  pendingCoverFile,
+  coverCleared,
+  onPendingCoverChange,
+  onChange,
+}: BlogFormProps) {
+  const localPreviewUrl = useMemo(
+    () => (pendingCoverFile ? URL.createObjectURL(pendingCoverFile) : ""),
+    [pendingCoverFile]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (localPreviewUrl) URL.revokeObjectURL(localPreviewUrl);
+    };
+  }, [localPreviewUrl]);
+
+  const coverPreviewUrl =
+    localPreviewUrl ||
+    (!coverCleared && !pendingCoverFile
+      ? resolveAssetUrl(String(form.coverImage ?? ""))
+      : "");
+
   const gridFields = fields.filter(
     (f) => !BLOG_FULL_WIDTH_KEYS.has(f.key) && f.key !== "tags"
   );
@@ -139,6 +171,32 @@ export function BlogForm({ fields, form, formErrors, categoryOptions, onChange }
 
   return (
     <div className="space-y-4">
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">Cover image</label>
+        <FileUploadDropzone
+          size="sm"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          file={pendingCoverFile}
+          onChange={onPendingCoverChange}
+          labelSuffix="blog cover"
+          helperText="JPEG, PNG, WebP, GIF · max 25MB"
+          maxSizeMb={25}
+          previewUrl={coverPreviewUrl || undefined}
+          previewInside
+          previewAlt="Blog cover"
+          error={formErrors.coverImage}
+        />
+        {coverPreviewUrl ? (
+          <button
+            type="button"
+            onClick={() => onPendingCoverChange(null)}
+            className="mt-2 text-xs font-medium text-red-600 hover:text-red-700"
+          >
+            Remove image
+          </button>
+        ) : null}
+      </div>
+
       {categoryField && (
         <div>
           <label className="mb-1.5 block text-sm font-medium text-slate-700">

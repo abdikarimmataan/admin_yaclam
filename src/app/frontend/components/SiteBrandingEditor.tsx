@@ -14,6 +14,72 @@ import {
 } from "@/app/frontend/services/settings.service";
 
 const DEFAULT_HEADER_TEXT = "Yaclam (يعلم) — Learn Without Limits";
+const DEFAULT_LOGO_NAME = "Yaclam";
+const DEFAULT_LOGO_HIGHLIGHT = ".";
+
+function LogoNavbarPreview({
+  imageUrl,
+  showImage,
+  showText,
+  name,
+  highlight,
+}: {
+  imageUrl?: string;
+  showImage: boolean;
+  showText: boolean;
+  name: string;
+  highlight: string;
+}) {
+  const hasImage = showImage && !!imageUrl?.trim();
+  const hasText = showText && !!name.trim();
+
+  return (
+    <div className="mt-5 rounded-lg border border-gray-200 bg-white">
+      <div className="border-b border-gray-100 px-3 py-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+          Navbar preview
+        </p>
+      </div>
+      <div className="flex h-16 items-center border-b border-gray-100 bg-white/90 px-4 backdrop-blur-sm">
+        {hasImage || hasText ? (
+          <div
+            className={`flex items-center ${hasText ? "gap-2.5 text-[22px] font-extrabold tracking-tight text-[#0a1628]" : ""}`}
+          >
+            {hasImage && (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={imageUrl}
+                alt={name.trim() || "Site logo"}
+                className="h-9 w-auto max-w-[200px] object-contain"
+              />
+            )}
+            {hasText && (
+              <span>
+                {name.trim() || DEFAULT_LOGO_NAME}
+                <span className="text-[#d4a843]">
+                  {highlight || DEFAULT_LOGO_HIGHLIGHT}
+                </span>
+              </span>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400">
+            Enable image or text above to see the logo here.
+          </p>
+        )}
+      </div>
+      <p className="px-3 py-2 text-xs text-gray-500">
+        {hasImage && hasText
+          ? "Image and text shown together."
+          : hasImage
+            ? "Image only."
+            : hasText
+              ? "Text only."
+              : "Nothing visible on the site yet."}
+      </p>
+    </div>
+  );
+}
 
 export function SiteBrandingEditor() {
   const [recordId, setRecordId] = useState<string | null>(null);
@@ -21,6 +87,10 @@ export function SiteBrandingEditor() {
   const [headerText, setHeaderText] = useState(DEFAULT_HEADER_TEXT);
   const [currentLogoPath, setCurrentLogoPath] = useState("");
   const [currentFaviconPath, setCurrentFaviconPath] = useState("");
+  const [logoName, setLogoName] = useState(DEFAULT_LOGO_NAME);
+  const [logoHighlight, setLogoHighlight] = useState(DEFAULT_LOGO_HIGHLIGHT);
+  const [logoTextVisible, setLogoTextVisible] = useState(true);
+  const [logoPictureVisible, setLogoPictureVisible] = useState(true);
   const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
   const [pendingFaviconFile, setPendingFaviconFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +105,10 @@ export function SiteBrandingEditor() {
       setHeaderText(loaded?.seo?.title?.trim() || DEFAULT_HEADER_TEXT);
       setCurrentLogoPath(loaded?.logo?.picture?.light?.trim() ?? "");
       setCurrentFaviconPath(loaded?.favicon?.trim() ?? "");
+      setLogoName(loaded?.logo?.text?.name?.trim() || DEFAULT_LOGO_NAME);
+      setLogoHighlight(loaded?.logo?.text?.highlight ?? DEFAULT_LOGO_HIGHLIGHT);
+      setLogoTextVisible(loaded?.logo?.text?.isVisible !== false);
+      setLogoPictureVisible(loaded?.logo?.picture?.isVisible !== false);
     } catch (err) {
       toast.error((err as ApiError).message || "Failed to load site branding");
     } finally {
@@ -87,6 +161,12 @@ export function SiteBrandingEditor() {
           logoPath,
           headerText,
           faviconPath,
+          logoText: {
+            name: logoName,
+            highlight: logoHighlight,
+            isVisible: logoTextVisible,
+          },
+          logoPictureVisible,
         },
         recordId,
         settings
@@ -97,6 +177,10 @@ export function SiteBrandingEditor() {
       setHeaderText(saved.seo?.title?.trim() || headerText.trim());
       setCurrentLogoPath(saved.logo?.picture?.light?.trim() ?? logoPath);
       setCurrentFaviconPath(saved.favicon?.trim() ?? faviconPath);
+      setLogoName(saved.logo?.text?.name?.trim() || logoName.trim() || DEFAULT_LOGO_NAME);
+      setLogoHighlight(saved.logo?.text?.highlight ?? logoHighlight);
+      setLogoTextVisible(saved.logo?.text?.isVisible !== false);
+      setLogoPictureVisible(saved.logo?.picture?.isVisible !== false);
       setPendingLogoFile(null);
       setPendingFaviconFile(null);
       toast.success("Site branding saved. Changes will appear on the public website.");
@@ -144,8 +228,37 @@ export function SiteBrandingEditor() {
                 </span>
                 <div>
                   <h3 className="text-sm font-bold text-gray-900">Site logo</h3>
-                  <p className="text-xs text-gray-500">Shown in the website navbar</p>
+                  <p className="text-xs text-gray-500">
+                    Image, text, or both — shown in the website navbar
+                  </p>
                 </div>
+              </div>
+
+              <div className="mb-4 flex flex-wrap gap-4">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={logoPictureVisible}
+                    onChange={(e) => setLogoPictureVisible(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-emerald-600"
+                  />
+                  <span className="font-medium text-gray-800">Show image</span>
+                  <span className="text-xs text-gray-500">
+                    {logoPictureVisible ? "Visible" : "Hidden"}
+                  </span>
+                </label>
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={logoTextVisible}
+                    onChange={(e) => setLogoTextVisible(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-emerald-600"
+                  />
+                  <span className="font-medium text-gray-800">Show text</span>
+                  <span className="text-xs text-gray-500">
+                    {logoTextVisible ? "Visible" : "Hidden"}
+                  </span>
+                </label>
               </div>
 
               <FileUploadDropzone
@@ -160,6 +273,52 @@ export function SiteBrandingEditor() {
                 previewInside
                 previewAlt="Site logo"
                 loading={saving}
+              />
+
+              <div className="mt-5 space-y-3">
+                <p className="text-sm font-semibold text-gray-800">Text logo</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label
+                      htmlFor="logo-name"
+                      className="mb-1.5 block text-xs font-semibold text-gray-700"
+                    >
+                      Name
+                    </label>
+                    <input
+                      id="logo-name"
+                      type="text"
+                      value={logoName}
+                      onChange={(e) => setLogoName(e.target.value)}
+                      placeholder={DEFAULT_LOGO_NAME}
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="logo-highlight"
+                      className="mb-1.5 block text-xs font-semibold text-gray-700"
+                    >
+                      Highlight
+                    </label>
+                    <input
+                      id="logo-highlight"
+                      type="text"
+                      value={logoHighlight}
+                      onChange={(e) => setLogoHighlight(e.target.value)}
+                      placeholder={DEFAULT_LOGO_HIGHLIGHT}
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <LogoNavbarPreview
+                imageUrl={logoPreviewUrl || undefined}
+                showImage={logoPictureVisible}
+                showText={logoTextVisible}
+                name={logoName}
+                highlight={logoHighlight}
               />
             </div>
 
