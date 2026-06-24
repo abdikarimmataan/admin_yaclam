@@ -6,6 +6,7 @@ import type { ApiError } from "@/config/api";
 import { CollapsibleFormPanel } from "@/app/frontend/CMS/components/CollapsibleFormPanel";
 import {
   HOME_API_PATH,
+  HOME_CMS_FORM_DEFAULTS,
   HOME_SECTIONS_API_PATH,
   HOME_SECTIONS_FORM_DEFAULTS,
 } from "@/app/frontend/CMS/config/home-cms-fields";
@@ -44,6 +45,13 @@ function initialBlockState(): BlockState {
   };
 }
 
+function emptyHomeForm(): Record<string, unknown> {
+  return {
+    ...emptyFormValues(ALL_HOME_CMS_FIELDS),
+    ...HOME_CMS_FORM_DEFAULTS,
+  };
+}
+
 function emptyHomeSectionsForm(): Record<string, unknown> {
   return {
     ...emptyFormValues(ALL_HOME_SECTIONS_FIELDS),
@@ -67,7 +75,7 @@ export function HomePageEditor() {
         recordId: record?.id ? String(record.id) : null,
         form: record
           ? recordToFormValues(record, ALL_HOME_CMS_FIELDS)
-          : emptyFormValues(ALL_HOME_CMS_FIELDS),
+          : emptyHomeForm(),
         loading: false,
       }));
     } catch (err) {
@@ -75,7 +83,7 @@ export function HomePageEditor() {
       setHomeBlock((s) => ({
         ...s,
         loading: false,
-        form: emptyFormValues(ALL_HOME_CMS_FIELDS),
+        form: emptyHomeForm(),
       }));
     }
   }, []);
@@ -135,6 +143,8 @@ export function HomePageEditor() {
       });
       return;
     }
+
+    payload.isVisible = true;
 
     setHomeBlock((s) => ({ ...s, saving: true, errors: {} }));
     try {
