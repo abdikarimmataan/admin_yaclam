@@ -16,6 +16,12 @@ export type SettingsLogoPicture = {
 
 export type SettingsRecord = {
   id?: string;
+  favicon?: string;
+  seo?: {
+    title?: string;
+    description?: string;
+    keywords?: string[];
+  };
   logo?: {
     isVisible?: boolean;
     picture?: SettingsLogoPicture;
@@ -92,6 +98,95 @@ export async function saveSiteLogo(
         alt: current?.logo?.picture?.alt?.trim() || alt,
         isVisible: true,
       },
+    },
+  };
+
+  if (recordId) {
+    return api.patch<SettingsRecord>(
+      `${SETTINGS_API_PATH}/update/${recordId}`,
+      payload
+    );
+  }
+
+  return api.post<SettingsRecord>(`${SETTINGS_API_PATH}/create`, payload);
+}
+
+export async function uploadFaviconFile(file: File): Promise<string> {
+  const fd = new FormData();
+  fd.append("favicon", file);
+
+  const res = await fetch(`${API_BASE_URL}${SETTINGS_API_PATH}/upload/favicon`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: fd,
+  });
+
+  if (!res.ok) {
+    let message = res.statusText || "Upload failed";
+    try {
+      const body = (await res.json()) as { message?: string };
+      if (body.message) message = body.message;
+    } catch {
+      /* ignore */
+    }
+    throw { status: res.status, message } as ApiError;
+  }
+
+  const data = (await res.json()) as { favicon?: string };
+  return String(data.favicon ?? "");
+}
+
+export async function saveTabHeader(
+  headerText: string,
+  faviconPath: string,
+  recordId?: string | null,
+  current?: SettingsRecord | null
+): Promise<SettingsRecord> {
+  const payload = {
+    favicon: faviconPath,
+    seo: {
+      ...(current?.seo ?? {}),
+      title: headerText.trim(),
+    },
+  };
+
+  if (recordId) {
+    return api.patch<SettingsRecord>(
+      `${SETTINGS_API_PATH}/update/${recordId}`,
+      payload
+    );
+  }
+
+  return api.post<SettingsRecord>(`${SETTINGS_API_PATH}/create`, payload);
+}
+
+export type SiteBrandingInput = {
+  logoPath: string;
+  headerText: string;
+  faviconPath: string;
+};
+
+export async function saveSiteBranding(
+  input: SiteBrandingInput,
+  recordId?: string | null,
+  current?: SettingsRecord | null,
+  alt = "Yaclam"
+): Promise<SettingsRecord> {
+  const payload = {
+    logo: {
+      ...(current?.logo ?? {}),
+      isVisible: true,
+      picture: {
+        ...(current?.logo?.picture ?? {}),
+        light: input.logoPath,
+        alt: current?.logo?.picture?.alt?.trim() || alt,
+        isVisible: true,
+      },
+    },
+    favicon: input.faviconPath,
+    seo: {
+      ...(current?.seo ?? {}),
+      title: input.headerText.trim(),
     },
   };
 
