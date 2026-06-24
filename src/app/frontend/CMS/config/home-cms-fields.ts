@@ -75,6 +75,35 @@ export const HOME_CMS_FORM_FIELDS: FormField[] = [
   { key: "statsIsVisible", label: "Stats Visible", type: "boolean" },
 ];
 
+/** Defaults for POST /home/create — matches API schema and public site fallbacks. */
+export const HOME_CMS_FORM_DEFAULTS: Record<string, unknown> = {
+  heroBadgeText: "AI-Powered Somali E-Learning",
+  heroTitle: "Learn Skills. Build Careers. Create Opportunities.",
+  heroSubtitle:
+    "Master practical skills, earn certificates, discover scholarships, and advance your career through expert-led Somali-language education.",
+  heroBrandMark: "يعلم",
+  heroVerseArabic: "قُلْ هَلْ يَسْتَوِي الَّذِينَ يَعْلَمُونَ وَالَّذِينَ لَا يَعْلَمُونَ",
+  heroVerseTranslation: "Are those who know equal to those who do not know?",
+  "heroPrimaryButton.label": "Start Learning",
+  "heroPrimaryButton.url": "/register",
+  "heroPrimaryButton.style": "",
+  "heroPrimaryButton.isVisible": true,
+  "heroSecondaryButton.label": "Explore Courses",
+  "heroSecondaryButton.url": "/courses",
+  "heroSecondaryButton.style": "",
+  "heroSecondaryButton.isVisible": true,
+  heroLearnerCountText: "Joined by **10,000+** Somali learners",
+  heroIsVisible: true,
+  stats: [
+    { value: "10K+", label: "Learners", isVisible: true },
+    { value: "50+", label: "Courses", isVisible: true },
+    { value: "200+", label: "Scholarships", isVisible: true },
+    { value: "50+", label: "Career Paths", isVisible: true },
+    { value: "100+", label: "Certificates", isVisible: true },
+  ],
+  statsIsVisible: true,
+};
+
 export const HOME_SECTIONS_FORM_FIELDS: FormField[] = [
   {
     key: "fieldSection.eyebrow",
