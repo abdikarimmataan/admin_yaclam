@@ -14,10 +14,13 @@ type BlogModalProps = {
   formErrors: Record<string, string>;
   fields: FormField[];
   categoryOptions: Select2Option[];
+  pendingCoverFile: File | null;
+  coverCleared: boolean;
   submitting: boolean;
   onClose: () => void;
   onSubmit: () => void;
   onChange: (key: string, value: unknown) => void;
+  onPendingCoverChange: (file: File | null) => void;
 };
 
 export function BlogModal({
@@ -28,10 +31,13 @@ export function BlogModal({
   formErrors,
   fields,
   categoryOptions,
+  pendingCoverFile,
+  coverCleared,
   submitting,
   onClose,
   onSubmit,
   onChange,
+  onPendingCoverChange,
 }: BlogModalProps) {
   useEffect(() => {
     if (!open) return;
@@ -73,6 +79,9 @@ export function BlogModal({
             form={form}
             formErrors={formErrors}
             categoryOptions={categoryOptions}
+            pendingCoverFile={pendingCoverFile}
+            coverCleared={coverCleared}
+            onPendingCoverChange={onPendingCoverChange}
             onChange={onChange}
           />
         </div>

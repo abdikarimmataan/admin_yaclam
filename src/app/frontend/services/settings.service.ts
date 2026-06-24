@@ -164,6 +164,12 @@ export type SiteBrandingInput = {
   logoPath: string;
   headerText: string;
   faviconPath: string;
+  logoText?: {
+    name?: string;
+    highlight?: string;
+    isVisible?: boolean;
+  };
+  logoPictureVisible?: boolean;
 };
 
 export async function saveSiteBranding(
@@ -176,11 +182,18 @@ export async function saveSiteBranding(
     logo: {
       ...(current?.logo ?? {}),
       isVisible: true,
+      text: {
+        ...(current?.logo?.text ?? {}),
+        name: input.logoText?.name?.trim() ?? current?.logo?.text?.name ?? "Yaclam",
+        highlight:
+          input.logoText?.highlight ?? current?.logo?.text?.highlight ?? ".",
+        isVisible: input.logoText?.isVisible !== false,
+      },
       picture: {
         ...(current?.logo?.picture ?? {}),
         light: input.logoPath,
         alt: current?.logo?.picture?.alt?.trim() || alt,
-        isVisible: true,
+        isVisible: input.logoPictureVisible !== false,
       },
     },
     favicon: input.faviconPath,

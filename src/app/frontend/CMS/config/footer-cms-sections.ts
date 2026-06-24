@@ -30,13 +30,14 @@ export const FOOTER_CMS_PANELS: CmsFormPanel[] = [
   {
     id: "socials",
     title: "Social links",
-    description: "Profile URLs for social icons",
+    description: "Profile URLs for social icons. For WhatsApp, enter a phone number with country code.",
     fieldKeys: [
       "socials.facebook",
       "socials.twitter",
       "socials.linkedin",
       "socials.youtube",
       "socials.instagram",
+      "socials.whatsapp",
     ],
   },
   {

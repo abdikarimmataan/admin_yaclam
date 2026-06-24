@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
+import { WhatsAppFloatButton } from "@/shared/components/WhatsAppFloatButton";
 
 export function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -38,6 +39,7 @@ export function AdminLayoutShell({ children }: { children: React.ReactNode }) {
           <Footer />
         </div>
       </div>
+      <WhatsAppFloatButton />
     </AuthGuard>
   );
 }

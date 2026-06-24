@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import type { BlogPostRecord } from "@/app/blog/model/blog.model";
 import {
   getBlogPostCategoryName,
@@ -23,6 +23,7 @@ type BlogTableProps = {
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
   onEdit: (item: BlogPostRecord) => void;
+  onDelete: (item: BlogPostRecord) => void;
   onTogglePublished: (item: BlogPostRecord) => void;
 };
 
@@ -42,6 +43,7 @@ export function BlogTable({
   onPageChange,
   onPageSizeChange,
   onEdit,
+  onDelete,
   onTogglePublished,
 }: BlogTableProps) {
   return (
@@ -130,6 +132,16 @@ export function BlogTable({
                           title="Edit"
                         >
                           <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDelete(item)}
+                          disabled={busyId === item.id}
+                          className="inline-flex items-center rounded p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                          aria-label="Delete"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </td>
