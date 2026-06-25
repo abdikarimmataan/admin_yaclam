@@ -12,6 +12,14 @@ function isCardNumberVisibleKey(key: string) {
   return key.endsWith(".cardNumberVisible");
 }
 
+function isFeaturedGridDimensionKey(key: string) {
+  return key.endsWith(".gridRows") || key.endsWith(".gridColumns");
+}
+
+function isDisplayOnlyField(field: FormField) {
+  return field.type === "featuredGridPreview";
+}
+
 export function parseBoolText(input: string, fallback = true) {
   if (!input.trim()) return fallback;
   return !["false", "0", "no", "off"].includes(input.trim().toLowerCase());
@@ -158,8 +166,20 @@ export function buildFormPayload(
   const errors: Record<string, string> = {};
 
   fields.forEach((f) => {
+    if (isDisplayOnlyField(f)) return;
     if (f.required && !String(form[f.key] ?? "").trim() && f.type !== "boolean") {
       errors[f.key] = `${f.label} is required`;
+    }
+    if (isFeaturedGridDimensionKey(f.key)) {
+      const raw = String(form[f.key] ?? "").trim();
+      if (!raw && form[f.key] !== 0) {
+        errors[f.key] = `${f.label} is required`;
+      } else {
+        const n = Number(raw);
+        if (!Number.isInteger(n) || n < 1 || n > 6) {
+          errors[f.key] = `${f.label} must be a whole number between 1 and 6`;
+        }
+      }
     }
     if (isCardNumberVisibleKey(f.key)) {
       const raw = String(form[f.key] ?? "").trim();
@@ -191,6 +211,7 @@ export function buildFormPayload(
 
   const payload: Record<string, unknown> = {};
   fields.forEach((f) => {
+    if (isDisplayOnlyField(f)) return;
     const raw = form[f.key];
     let value: unknown = raw;
     if (f.type === "number") {

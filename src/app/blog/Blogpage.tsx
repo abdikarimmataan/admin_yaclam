@@ -133,6 +133,7 @@ export function Blogpage() {
       const record = await blogPostApi.getById(id);
       setEditing(record);
       setForm({
+        id: record.id,
         ...toBlogFormValues(pickFormValues(record, blogKeys)),
         coverImage: record.coverImage ?? "",
       });

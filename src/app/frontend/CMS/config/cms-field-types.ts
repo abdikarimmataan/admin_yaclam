@@ -11,7 +11,8 @@ export type FieldType =
   | "linkList"
   | "paymentList"
   | "stepsList"
-  | "footerColumnsList";
+  | "footerColumnsList"
+  | "featuredGridPreview";
 
 export type SelectOption = {
   value: string;
@@ -31,4 +32,6 @@ export type FormField = {
   hint?: string;
   /** Max decimal places for type "number" (e.g. 2 for price fields). */
   decimals?: number;
+  /** Span full width in the admin form grid. */
+  fullWidth?: boolean;
 };

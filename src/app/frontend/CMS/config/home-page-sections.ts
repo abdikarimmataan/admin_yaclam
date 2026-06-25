@@ -69,7 +69,9 @@ export const HOME_SECTIONS_PANELS: HomeFormPanel[] = [
     fieldKeys: [
       "featuredCoursesSection.eyebrow",
       "featuredCoursesSection.title",
-      "featuredCoursesSection.cardNumberVisible",
+      "featuredCoursesSection.gridRows",
+      "featuredCoursesSection.gridColumns",
+      "featuredCoursesSection.gridPreview",
       "featuredCoursesSection.subtitle",
       "featuredCoursesSection.isVisible",
       "featuredCoursesSection.viewAllButton.text",
