@@ -4,6 +4,7 @@ import {
   BLOG_CREATE_KEYS,
   BLOG_FORM_FIELDS,
 } from "@/app/blog/model/blog.model";
+import { isHtmlContent, stripHtml } from "@/shared/utils/html-content";
 
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -107,7 +108,10 @@ export function validateBlogForm(
       );
 
   activeFields.forEach((f) => {
-    if (f.required && !String(form[f.key] ?? "").trim()) {
+    if (!f.required) return;
+    const raw = String(form[f.key] ?? "");
+    const value = f.key === "content" ? stripHtml(raw) : raw.trim();
+    if (!value) {
       errors[f.key] = `${f.label} is required`;
     }
   });
@@ -158,6 +162,9 @@ export function buildBlogPayload(
   const content = String(payload.content ?? "").trim();
   if (content) {
     payload.content = content;
+    if (isHtmlContent(content)) {
+      payload.body = [content];
+    }
   }
 
   if (!editing) {
@@ -179,7 +186,8 @@ export function getModalFields(editing: boolean): FormField[] {
 export function toBlogFormValues(item: Record<string, unknown>): Record<string, unknown> {
   const form: Record<string, unknown> = { ...item };
   const body = form.body;
-  if (!form.content && Array.isArray(body)) {
+  const existingContent = String(form.content ?? "").trim();
+  if (!existingContent && Array.isArray(body)) {
     form.content = body.map((p) => String(p)).filter(Boolean).join("\n\n");
   }
   if (form.tags && !Array.isArray(form.tags)) {

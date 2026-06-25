@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import type { FormField } from "@/app/frontend/CMS/config/api-modules";
 import { FooterColumnsEditor } from "@/app/frontend/CMS/components/FooterColumnsEditor";
+import { FeaturedCoursesGridPreview } from "@/app/frontend/CMS/components/FeaturedCoursesGridPreview";
 import { StatsListEditor } from "@/app/frontend/CMS/components/StatsListEditor";
 import { IconSelectField } from "@/shared/components/IconSelectField";
 import { Select2 } from "@/shared/components/Select2";
@@ -103,17 +104,21 @@ function FieldAnchor({
 function FormFieldControl({
   field,
   value,
+  form,
   err,
   onChange,
   compact,
   halfRow,
+  fullWidth,
 }: {
   field: FormField;
   value: unknown;
+  form: Record<string, unknown>;
   err?: string;
   onChange: (key: string, value: unknown) => void;
   compact?: boolean;
   halfRow?: boolean;
+  fullWidth?: boolean;
 }) {
   if (field.type === "icon" || field.key === "icon" || field.key.endsWith(".icon")) {
     return (
@@ -219,6 +224,9 @@ function FormFieldControl({
           {field.decimals != null && (
             <p className="mt-1 text-xs text-gray-500">Up to {field.decimals} decimal places (e.g. 0.10)</p>
           )}
+          {field.hint && (
+            <p className="mt-1 text-xs text-gray-500">{field.hint}</p>
+          )}
           {err && <p className="mt-1 text-sm text-red-600">{err}</p>}
         </div>
       </FieldAnchor>
@@ -255,6 +263,19 @@ function FormFieldControl({
           error={err}
           onChange={(items) => onChange(field.key, items)}
         />
+      </FieldAnchor>
+    );
+  }
+
+  if (field.type === "featuredGridPreview") {
+    return (
+      <FieldAnchor fieldKey={field.key} error={err}>
+        <div className={fullWidth ? "col-span-full" : "sm:col-span-2"}>
+          <FeaturedCoursesGridPreview
+            rows={form["featuredCoursesSection.gridRows"]}
+            columns={form["featuredCoursesSection.gridColumns"]}
+          />
+        </div>
       </FieldAnchor>
     );
   }
@@ -370,6 +391,7 @@ export function CmsFormFields({ fields, form, errors, onChange }: CmsFormFieldsP
                   key={field.key}
                   field={field}
                   value={form[field.key]}
+                  form={form}
                   err={errors[field.key]}
                   onChange={onChange}
                   compact={!isHalfRow && !isTripleRow}
@@ -387,8 +409,10 @@ export function CmsFormFields({ fields, form, errors, onChange }: CmsFormFieldsP
                 key={field.key}
                 field={field}
                 value={form[field.key]}
+                form={form}
                 err={errors[field.key]}
                 onChange={onChange}
+                fullWidth={field.fullWidth}
               />
             ))}
           </div>

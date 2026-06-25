@@ -7,8 +7,10 @@ import { Select2 } from "@/shared/components/Select2";
 import { FileUploadDropzone } from "@/shared/components/FileUploadDropzone";
 import { resolveAssetUrl } from "@/shared/utils/asset-url";
 import { publishedDateToDateInputValue } from "@/app/blog/validation/blog.validation";
+import { blogPostApi } from "@/app/blog/service/blog.service";
 import { BlogTagsEditor } from "@/app/blog/components/BlogTagsEditor";
 import { BLOG_FULL_WIDTH_KEYS } from "@/app/blog/model/blog.model";
+import { BlogContentEditor } from "@/shared/components/BlogContentEditor";
 
 const PLACEHOLDERS: Record<string, string> = {
   title: "e.g. How to start your data career",
@@ -33,11 +35,13 @@ function BlogInput({
   field,
   value,
   error,
+  editorKey,
   onChange,
 }: {
   field: FormField;
   value: unknown;
   error?: string;
+  editorKey?: string;
   onChange: (value: unknown) => void;
 }) {
   const fieldClass = `${inputClass} ${error ? "border-red-400" : ""}`;
@@ -84,6 +88,25 @@ function BlogInput({
     );
   }
 
+  if (field.key === "content") {
+    return (
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">
+          {field.label}
+          {field.required && <span className="text-red-500"> *</span>}
+        </label>
+        <BlogContentEditor
+          editorKey={editorKey ?? "create-blog"}
+          value={String(value ?? "")}
+          onChange={(html) => onChange(html)}
+          placeholder="Write your article. Use headings, lists, tables, images, links, and embeds."
+          error={error}
+          onUploadImage={(file) => blogPostApi.uploadCoverImage(file)}
+        />
+      </div>
+    );
+  }
+
   if (field.type === "textarea") {
     return (
       <div>
@@ -92,14 +115,10 @@ function BlogInput({
           {field.required && <span className="text-red-500"> *</span>}
         </label>
         <textarea
-          rows={field.key === "content" ? 8 : 3}
+          rows={3}
           value={String(value ?? "")}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={
-            field.key === "content"
-              ? "Write the article. Use blank lines between paragraphs."
-              : PLACEHOLDERS[field.key]
-          }
+          placeholder={PLACEHOLDERS[field.key]}
           className={fieldClass}
         />
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
@@ -168,6 +187,7 @@ export function BlogForm({
   );
   const gridRows = chunkFields(gridFields, 3);
   const categoryField = fields.find((f) => f.key === "categoryId");
+  const contentEditorKey = String(form.id ?? "create-blog");
 
   return (
     <div className="space-y-4">
@@ -233,6 +253,7 @@ export function BlogForm({
           field={field}
           value={form[field.key]}
           error={formErrors[field.key]}
+          editorKey={field.key === "content" ? contentEditorKey : undefined}
           onChange={(value) => onChange(field.key, value)}
         />
       ))}
