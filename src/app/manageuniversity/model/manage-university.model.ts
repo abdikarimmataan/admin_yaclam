@@ -1,5 +1,5 @@
 import { resolveRefId } from "@/app/university-language/model/university-language.model";
-import type { UniversityLocationRef, UniversityRecord } from "@/app/university/model/university.model";
+import type { UniversityRecord } from "@/app/university/model/university.model";
 import {
   emptyManageOffering,
   type ManageOfferingForm,

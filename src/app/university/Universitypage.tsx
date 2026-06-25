@@ -30,7 +30,6 @@ import { useCountryIdSelectOptions } from "@/shared/hooks/useCountryIdSelectOpti
 import { pickFormValues } from "@/app/frontend/CMS/lib/cms-utils";
 import { confirmDelete, showError } from "@/shared/utils/sweetalert";
 import { toast } from "@/shared/utils/toast";
-import type { Select2Option } from "@/shared/components/Select2";
 
 const formKeys = UNIVERSITY_BASIC_FORM_FIELDS.map((f) => f.key);
 
