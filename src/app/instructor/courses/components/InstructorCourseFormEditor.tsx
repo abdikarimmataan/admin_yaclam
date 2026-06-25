@@ -30,6 +30,7 @@ import { toast } from "@/shared/utils/toast";
 type InstructorCourseFormEditorProps = {
   recordId: string | null;
   fieldOptions: FieldOption[];
+  courseCategoryOptions: FieldOption[];
   onBack: () => void;
   onSaved: () => void;
   onDeleted?: () => void;
@@ -38,6 +39,7 @@ type InstructorCourseFormEditorProps = {
 export function InstructorCourseFormEditor({
   recordId,
   fieldOptions,
+  courseCategoryOptions,
   onBack,
   onSaved,
   onDeleted,
@@ -46,6 +48,7 @@ export function InstructorCourseFormEditor({
   const editing = Boolean(activeRecordId);
   const [form, setForm] = useState<Record<string, unknown>>(courseRecordToForm(null));
   const [selectedFieldId, setSelectedFieldId] = useState("");
+  const [selectedCourseCategoryId, setSelectedCourseCategoryId] = useState("");
   const [uploadFiles, setUploadFiles] = useState<CourseUploadFiles>({});
   const [loading, setLoading] = useState(Boolean(recordId));
   const [loadingInstructor, setLoadingInstructor] = useState(true);
@@ -92,6 +95,7 @@ export function InstructorCourseFormEditor({
       setActiveRecordId(null);
       setForm(courseRecordToForm(null));
       setSelectedFieldId("");
+      setSelectedCourseCategoryId("");
       setUploadFiles({});
       setLoading(false);
       return;
@@ -104,6 +108,7 @@ export function InstructorCourseFormEditor({
       const nextForm = courseRecordToForm(record);
       setForm(nextForm);
       setSelectedFieldId(String(nextForm.fieldId ?? ""));
+      setSelectedCourseCategoryId(String(nextForm.courseCategoryId ?? ""));
     } catch (err) {
       toast.error((err as ApiError).message || "Failed to load course");
     } finally {
@@ -140,6 +145,11 @@ export function InstructorCourseFormEditor({
     patchForm("fieldId", value);
   };
 
+  const handleCourseCategoryChange = (value: string) => {
+    setSelectedCourseCategoryId(value);
+    patchForm("courseCategoryId", value);
+  };
+
   const save = async () => {
     const instructorId = getStoredInstructorId();
     if (!instructorId || !instructor) {
@@ -153,9 +163,17 @@ export function InstructorCourseFormEditor({
       return;
     }
 
+    const courseCategoryId =
+      selectedCourseCategoryId.trim() || String(form.courseCategoryId ?? "").trim();
+    if (!courseCategoryId) {
+      setErrors({ courseCategoryId: "Category is required" });
+      return;
+    }
+
     const formWithField = {
       ...form,
       fieldId,
+      courseCategoryId,
       "instructor.instructorId": instructorId,
       "instructor.name": instructor.name ?? "",
       "instructor.role": getInstructorRoleName(instructor),
@@ -187,6 +205,7 @@ export function InstructorCourseFormEditor({
         "instructor.avatar": instructor.photo ?? "",
       });
       setSelectedFieldId(String(savedForm.fieldId ?? ""));
+      setSelectedCourseCategoryId(String(savedForm.courseCategoryId ?? ""));
       setUploadFiles({});
 
       if (savedId) {
@@ -273,6 +292,10 @@ export function InstructorCourseFormEditor({
                 fieldOptions={fieldOptions}
                 onFieldChange={handleFieldChange}
                 fieldError={errors.fieldId}
+                courseCategoryId={selectedCourseCategoryId}
+                courseCategoryOptions={courseCategoryOptions}
+                onCourseCategoryChange={handleCourseCategoryChange}
+                courseCategoryError={errors.courseCategoryId}
                 savedThumbnailUrl={String(form.thumbnail ?? "")}
                 savedVideoUrl={String(form.previewVideoUrl ?? "")}
                 thumbnailFile={uploadFiles.thumbnail ?? null}

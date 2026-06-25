@@ -1,7 +1,7 @@
 "use client";
 
 import { Select2 } from "@/shared/components/Select2";
-import { FormFieldHint, FormFieldLabel } from "@/shared/components/FormFieldLabel";
+import { FormFieldLabel } from "@/shared/components/FormFieldLabel";
 import { useCountryIdSelectOptions } from "@/shared/hooks/useCountryIdSelectOptions";
 
 type CountryIdSelectFieldProps = {

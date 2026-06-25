@@ -18,6 +18,12 @@ import {
 import { fieldApi } from "@/app/fields/service/field.service";
 import type { FieldRecord } from "@/app/fields/model/field.model";
 import { getFieldLabel } from "@/app/fields/model/field.model";
+import { courseCategoryApi } from "@/app/course-category/service/course-category.service";
+import {
+  getCourseCategoryLabel,
+  getCourseCategoryRecordId,
+  type CourseCategoryRecord,
+} from "@/app/course-category/model/course-category.model";
 import type { FieldOption } from "@/app/courses/components/CourseMediaPanel";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { confirmVisibilityChange, showError } from "@/shared/utils/sweetalert";
@@ -34,6 +40,7 @@ export function InstructorCoursepage() {
   const [view, setView] = useState<ViewMode>("list");
   const [items, setItems] = useState<CourseRecord[]>([]);
   const [fields, setFields] = useState<FieldRecord[]>([]);
+  const [courseCategories, setCourseCategories] = useState<CourseCategoryRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
@@ -61,15 +68,28 @@ export function InstructorCoursepage() {
     [fields]
   );
 
+  const courseCategoryOptions: FieldOption[] = useMemo(
+    () =>
+      courseCategories
+        .map((c) => ({
+          id: getCourseCategoryRecordId(c),
+          text: getCourseCategoryLabel(c),
+        }))
+        .filter((c) => c.id),
+    [courseCategories]
+  );
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [coursesRes, fieldsRes] = await Promise.all([
+      const [coursesRes, fieldsRes, categoriesRes] = await Promise.all([
         instructorCourseApi.getAll({ page: 1, pageSize: 500 }),
         fieldApi.getAll({ page: 1, pageSize: 500 }),
+        courseCategoryApi.getAll({ page: 1, pageSize: 500 }),
       ]);
       setItems((coursesRes.data ?? []) as CourseRecord[]);
       setFields((fieldsRes.data ?? []) as FieldRecord[]);
+      setCourseCategories((categoriesRes.data ?? []) as CourseCategoryRecord[]);
     } catch (err) {
       toast.error((err as ApiError).message || "Failed to load courses");
       setItems([]);
@@ -103,6 +123,10 @@ export function InstructorCoursepage() {
   const openCreate = () => {
     if (fields.length === 0) {
       toast.error("Create at least one field before adding courses.");
+      return;
+    }
+    if (courseCategories.length === 0) {
+      toast.error("Create at least one course category before adding courses.");
       return;
     }
     setRecordId(null);
@@ -194,6 +218,7 @@ export function InstructorCoursepage() {
       <InstructorCourseFormEditor
         recordId={recordId}
         fieldOptions={fieldOptions}
+        courseCategoryOptions={courseCategoryOptions}
         onBack={backToList}
         onSaved={handleSaved}
         onDeleted={handleSaved}
@@ -236,7 +261,7 @@ export function InstructorCoursepage() {
         <button
           type="button"
           onClick={openCreate}
-          disabled={fields.length === 0}
+          disabled={fields.length === 0 || courseCategories.length === 0}
           className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Create
