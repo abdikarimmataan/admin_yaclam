@@ -10,6 +10,7 @@ import {
   type CourseModule,
   type CourseRecord,
   getCourseFieldId,
+  getCourseCategoryId,
 } from "@/app/courses/model/course.model";
 import { resolveLessonType } from "@/app/courses/lib/lesson-media";
 
@@ -123,6 +124,9 @@ export function courseRecordToForm(record: CourseRecord | null): Record<string, 
   const fieldId = getCourseFieldId(record);
   if (fieldId) form.fieldId = fieldId;
 
+  const courseCategoryId = getCourseCategoryId(record);
+  if (courseCategoryId) form.courseCategoryId = courseCategoryId;
+
   const details = record.details;
   if (details) {
     if (!String(form.level ?? "").trim() && details.skillLevel) form.level = details.skillLevel;
@@ -181,6 +185,13 @@ export function buildCoursePayload(
     payload.fieldId = fieldId;
   } else if (!editing) {
     return { payload: null, errors: { fieldId: "Field is required" } };
+  }
+
+  const courseCategoryId = String(form.courseCategoryId ?? "").trim();
+  if (courseCategoryId) {
+    payload.courseCategoryId = courseCategoryId;
+  } else if (!editing) {
+    return { payload: null, errors: { courseCategoryId: "Category is required" } };
   }
 
   const overviewHeadline = String(form["overview.headline"] ?? "").trim();

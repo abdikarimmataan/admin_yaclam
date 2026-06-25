@@ -12,6 +12,10 @@ type CourseMediaPanelProps = {
   fieldOptions: FieldOption[];
   onFieldChange: (value: string) => void;
   fieldError?: string;
+  courseCategoryId: string;
+  courseCategoryOptions: FieldOption[];
+  onCourseCategoryChange: (value: string) => void;
+  courseCategoryError?: string;
   savedThumbnailUrl?: string;
   savedVideoUrl?: string;
   thumbnailFile: File | null;
@@ -26,6 +30,10 @@ export function CourseMediaPanel({
   fieldOptions,
   onFieldChange,
   fieldError,
+  courseCategoryId,
+  courseCategoryOptions,
+  onCourseCategoryChange,
+  courseCategoryError,
   savedThumbnailUrl = "",
   savedVideoUrl = "",
   thumbnailFile,
@@ -67,6 +75,20 @@ export function CourseMediaPanel({
       </div>
 
       <div className="space-y-4 px-4 py-4">
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+            Category <span className="text-red-500">*</span>
+          </label>
+          <Select2
+            options={courseCategoryOptions}
+            value={courseCategoryId}
+            onChange={onCourseCategoryChange}
+            placeholder="Select a category…"
+            searchPlaceholder="Search categories…"
+            error={courseCategoryError}
+          />
+        </div>
+
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-gray-700">
             Field <span className="text-red-500">*</span>
