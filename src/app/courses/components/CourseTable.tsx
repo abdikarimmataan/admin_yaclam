@@ -3,6 +3,7 @@
 import { Pencil, BookOpen, Eye, FileStack } from "lucide-react";
 import type { CourseRecord } from "@/app/courses/model/course.model";
 import {
+  getCourseCategoryName,
   getCourseFieldName,
   getCourseLabel,
 } from "@/app/courses/model/course.model";
@@ -63,10 +64,10 @@ export function CourseTable({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[860px] text-xs">
+        <table className="w-full min-w-[980px] text-xs">
           <thead>
             <tr className="border-b border-slate-100">
-              {["No.", "Title", "Field", "Visible", "Actions"].map((h) => (
+              {["No.", "Title", "Category", "Field", "Visible", "Actions"].map((h) => (
                 <th
                   key={h}
                   className={`px-3 py-2 text-left text-xs font-semibold text-slate-900 ${
@@ -109,6 +110,7 @@ export function CourseTable({
                     <td className="px-3 py-2 font-medium text-slate-900">
                       {getCourseLabel(item)}
                     </td>
+                    <td className="px-3 py-2 text-slate-600">{getCourseCategoryName(item)}</td>
                     <td className="px-3 py-2 text-slate-600">{getCourseFieldName(item)}</td>
                     <td className="px-3 py-2">
                       <label className="inline-flex cursor-pointer items-center gap-2">

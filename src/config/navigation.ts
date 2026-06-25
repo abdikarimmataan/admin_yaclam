@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  Building2,
   FileText,
   GraduationCap,
   Layers,
@@ -48,10 +49,30 @@ export const NAVIGATION: NavGroup[] = [
         ],
       },
       { href: "/fields", label: "Fields", icon: Layers },
-      { href: "/courses", label: "Courses", icon: BookOpen },
+      {
+        label: "Courses",
+        icon: BookOpen,
+        children: [
+          { href: "/course-category", label: "Category" },
+          { href: "/courses", label: "Manage course" },
+        ],
+      },
       { href: "/yaclam", label: "Yaclam", icon: Sparkles },
       { href: "/roadmap", label: "Roadmap", icon: Map },
       { href: "/scholarship", label: "Scholarship", icon: GraduationCap },
+      {
+        label: "Universities",
+        icon: Building2,
+        children: [
+          { href: "/degree-level", label: "Degree Level" },
+          { href: "/discipline", label: "Discipline" },
+          { href: "/program", label: "Study Area" },
+          { href: "/university-language", label: "Language" },
+          { href: "/university-location", label: "Location" },
+          { href: "/university", label: "Universities" },
+          { href: "/manageuniversity", label: "Manage University" },
+        ],
+      },
       { href: "/practitioners", label: "Practitioners", icon: UserCircle },
       { href: "/testimonials", label: "Testimonials", icon: MessageSquare },
       {

@@ -8,6 +8,7 @@ import {
   Mail,
   Map,
   Newspaper,
+  School,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -47,6 +48,13 @@ export const FRONTEND_PAGES: FrontendPage[] = [
     href: "/frontend/scholarship-cms",
     icon: GraduationCap,
     description: "Scholarships listing page copy and visibility",
+  },
+  {
+    slug: "university-cms",
+    label: "University CMS",
+    href: "/frontend/university-cms",
+    icon: School,
+    description: "Universities listing page copy and visibility",
   },
   {
     slug: "blog-cms",

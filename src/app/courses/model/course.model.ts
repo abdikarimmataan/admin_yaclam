@@ -6,6 +6,13 @@ export type FieldRef = {
   icon?: string;
 };
 
+export type CourseCategoryRef = {
+  id?: string;
+  name?: string;
+  description?: string;
+  sortOrder?: number;
+};
+
 export type CourseLesson = {
   id?: string;
   title?: string;
@@ -54,6 +61,7 @@ export type CourseRecord = {
   description?: string;
   shortDescription?: string;
   category?: string;
+  courseCategoryId?: string | CourseCategoryRef | null;
   fieldId?: string | FieldRef | null;
   level?: string;
   language?: string;
@@ -245,6 +253,21 @@ export function getCourseFieldName(item: CourseRecord): string {
   const f = item.fieldId;
   if (f && typeof f === "object" && "name" in f) {
     return String(f.name ?? "—");
+  }
+  return "—";
+}
+
+export function getCourseCategoryId(item: CourseRecord): string {
+  const c = item.courseCategoryId;
+  if (!c) return "";
+  if (typeof c === "string") return c;
+  return String(c.id ?? "");
+}
+
+export function getCourseCategoryName(item: CourseRecord): string {
+  const c = item.courseCategoryId;
+  if (c && typeof c === "object" && "name" in c) {
+    return String(c.name ?? "—");
   }
   return "—";
 }

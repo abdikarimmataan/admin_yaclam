@@ -1,6 +1,51 @@
 import Swal from "sweetalert2";
 import { toast } from "@/shared/utils/toast";
 
+export async function confirmDeleteOfferings(universityName: string): Promise<boolean> {
+  const result = await Swal.fire({
+    title: "Delete offerings?",
+    text: `Remove managed offerings/programs for "${universityName}"? The university record will stay on the Universities page.`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#0f172a",
+    cancelButtonColor: "#94a3b8",
+    confirmButtonText: "Yes, delete offerings",
+    cancelButtonText: "Cancel",
+  });
+  return result.isConfirmed;
+}
+
+/** @deprecated use confirmDeleteOfferings */
+export const confirmClearOfferings = confirmDeleteOfferings;
+
+export async function confirmDeleteManageRecord(universityName: string): Promise<boolean> {
+  const result = await Swal.fire({
+    title: "Delete manage record?",
+    text: `Remove offerings for "${universityName}" from Manage University? The university will stay on the Universities page.`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#0f172a",
+    cancelButtonColor: "#94a3b8",
+    confirmButtonText: "Yes, delete record",
+    cancelButtonText: "Cancel",
+  });
+  return result.isConfirmed;
+}
+
+export async function confirmDeleteUniversity(universityName: string): Promise<boolean> {
+  const result = await Swal.fire({
+    title: "Delete university?",
+    text: `Are you sure you want to delete "${universityName}"? This removes it from the database and cannot be undone.`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#0f172a",
+    cancelButtonColor: "#94a3b8",
+    confirmButtonText: "Yes, delete",
+    cancelButtonText: "Cancel",
+  });
+  return result.isConfirmed;
+}
+
 export async function confirmDelete(itemName: string): Promise<boolean> {
   const result = await Swal.fire({
     title: "Delete field?",
